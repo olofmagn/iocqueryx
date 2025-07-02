@@ -8,16 +8,30 @@ Date: 2025-07-02
 import re
 import sys
 import argparse
+import logging
+
 from typing import Optional, List, Dict
 
 """
 Utility functions
 """
 
+def get_logger(name: str = "IocQueryx", level: int = logging.INFO) -> logging.Logger:
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
+    return logger
+
 def extract_items(input_file: str) -> List[str]:
     """
     Args:
-    - input_file (str): Path to the input file containing a list of items.Each line should include an IP address, domain, or file hash.
+    - input_file (str): Path to the input file containing a list of items. Each line should include an IP address, domain, or file hash.
 
     Returns:
     - List[str]: A list containing only the first column (field) from each non-empty line in the input file.
@@ -28,13 +42,12 @@ def extract_items(input_file: str) -> List[str]:
             items = [line.strip().split(',')[0] for line in f if line.strip()]
             return items
     except FileNotFoundError as e:
-        print(
+        logger.info(
             f"File not found. Please check if you provided correct filepath {input_file}: {e}")
         sys.exit(1)
     except IOError as e:
-        print(f"Something unexpected happend: {e}")
+        logger.info(f"Something unexpected happend: {e}")
         sys.exit(1)
-
 
 def build_conditions(field: str, values: list, operator="AND", wrap_values: bool = False, quote_char: str = "'", comparator: str = "=") -> str:
     """
