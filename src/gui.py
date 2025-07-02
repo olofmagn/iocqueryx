@@ -206,28 +206,32 @@ class QueryGeneratorGUI:
     def update_field_visibility(self):
         """
         Update field visibility based on the platform
-        Using disabled field to show to user that there other options - works as this is an minimal application.
         """
 
         mode = self.mode_var.get()
 
-        if mode == "aql":
-            self.set_widget_state(self.qid_label, self.qid_entry, "normal")
-            self.platform_info_label.config(text="Using AQL Search query mode")
-        else:
-            self.set_widget_state(self.qid_label, self.qid_entry, "disabled")
+        visibility_map = {
+            "aql": {
+                "ea": "disabled",
+                "qid": "normal",
+                "info": "Using AQL Search query mode"
+            },
+            "es": {
+                "ea": "normal",
+                "qid": "disabled",
+                "info": "Using Elastic Search query mode"
+            },
+            "defender": {
+                "ea": "disabled",
+                "qid": "disabled",
+                "info": "Using Defender Search query mode"
+            }
+        }
 
-        if mode == "es":
-            self.set_widget_state(self.ea_label, self.ea_entry, "normal")
-            self.platform_info_label.config(text="Using Elastic Search query mode")
-        else:
-            self.set_widget_state(self.ea_label, self.ea_entry, "disabled")
-
-        if mode == "defender":
-            self.set_widget_state(self.ea_label, self.ea_entry, "normal")
-            self.platform_info_label.config(text="Using Defender Search query mode")
-            self.set_widget_state(self.ea_label, self.ea_entry, "disabled")
-            self.set_widget_state(self.qid_label, self.qid_entry, "disabled")
+        config = visibility_map.get(mode, {})
+        self.set_widget_state(self.ea_label, self.ea_entry, config.get("ea", "disabled"))
+        self.set_widget_state(self.qid_label, self.qid_entry, config.get("qid", "disabled"))
+        self.platform_info_label.config(text=config.get("info", ""))
 
     def set_widget_state(self, label: tk.Label, entry: tk.Entry, state: str, clear: bool=True) -> None:
         """
@@ -246,12 +250,12 @@ class QueryGeneratorGUI:
         Update hash type visibility
         """
 
+        self.hash_type_label.configure(text="Hash Type:")
+
         if self.type_var.get() in ("ip", "domain"):
             self.hash_type_combobox.configure(state="disabled")
-            self.hash_type_label.configure(text="Hash Type:")
         else:
             self.hash_type_combobox.configure(state="normal")
-            self.hash_type_label.configure(text="Hash Type:")
 
     def change_time_range(self, direction: int) -> None:
         """
