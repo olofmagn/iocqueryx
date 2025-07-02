@@ -14,11 +14,12 @@ from tkinter import ttk, filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
 
 from utils.generate_queries import generate_query_from_args
-from utils.utility import create_parser
+from utils.utility import get_logger
 
 class QueryGeneratorGUI:
     TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
     def __init__(self, root):
+        self.logger = get_logger()
         self.root = root
         self.root.title("IocQueryX - IOC Hunting Query Generator")
         self.root.minsize(500, 400)  # optional minimum size
@@ -142,14 +143,17 @@ class QueryGeneratorGUI:
         # Validate required fields
         if not self.input_entry.get():
             messagebox.showerror("Input missing", "Please select an input file")
+            self.logger.error("Input missing. Please select an input file")
             return 0
         
         if not self.mode_var.get():
             messagebox.showerror("Input missing", "Please enter a valid mode")
+            self.logger.error("Input missing. Please enter a valid mode")
             return 0
 
         if not self.type_var.get():
             messagebox.showerror("Input missing", "Please enter a valid type")
+            self.logger.error("Input missing. Please enter a valid type")
             return 0
         
         # Build base args
@@ -167,6 +171,7 @@ class QueryGeneratorGUI:
             for qid in qids:
                 if not qid.strip().isdigit():
                     messagebox.showerror("Invalid QID", f"QID '{qid}' must be an integer.")
+                    self.logger.error(f"Invalid QID - QID '{qid}' must be an integer.")
                     return 0
 
             args.extend(["-q"] + [qid.strip() for qid in qids])
@@ -177,6 +182,7 @@ class QueryGeneratorGUI:
                 ea = ea.strip()
                 if not ea:
                     messagebox.showerror("Invalid input","Event action can not be empty.")
+                    self.logger.error("Invalid input", "Event action can not be empty")
                     return 0
 
             args.extend(["-ea"] + self.ea_entry.get().split(","))
@@ -202,6 +208,7 @@ class QueryGeneratorGUI:
             self.root.clipboard_append(text)
             self.root.update()
             messagebox.showinfo("Copied", "Query copied to clipboard.")
+            self.logger.info("Query copied to clipboard")
 
     def update_field_visibility(self):
         """

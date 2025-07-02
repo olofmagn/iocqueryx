@@ -28,6 +28,9 @@ def get_logger(name: str = "IocQueryx", level: int = logging.INFO) -> logging.Lo
 
     return logger
 
+# Use this on module level
+logger = get_logger()
+
 def extract_items(input_file: str) -> List[str]:
     """
     Args:
@@ -42,11 +45,11 @@ def extract_items(input_file: str) -> List[str]:
             items = [line.strip().split(',')[0] for line in f if line.strip()]
             return items
     except FileNotFoundError as e:
-        logger.info(
+        logger.error(
             f"File not found. Please check if you provided correct filepath {input_file}: {e}")
         sys.exit(1)
     except IOError as e:
-        logger.info(f"Something unexpected happend: {e}")
+        logger.error(f"Something unexpected happend: {e}")
         sys.exit(1)
 
 def build_conditions(field: str, values: list, operator="AND", wrap_values: bool = False, quote_char: str = "'", comparator: str = "=") -> str:

@@ -17,7 +17,6 @@ from .gui import QueryGeneratorGUI
 from utils import create_parser
 from utils import generate_query_from_args
 
-
 BANNER = rf"""
 
   ___            ___                       __  __
@@ -32,6 +31,7 @@ Enjoy using the app, and feel free to share any feature requests or feedback!
 Version: {VERSION}
 """
 
+
 def main():
     """
     Main driver
@@ -42,7 +42,7 @@ def main():
         try:    
             args = parser.parse_args()    
             query = generate_query_from_args(args)    
-            print(query)    
+            logger.info(query)    
         except SystemExit:    
             sys.exit(1)    
         return  
@@ -69,6 +69,7 @@ def main():
             app = QueryGeneratorGUI(root)    
             root.mainloop()    
     except KeyboardInterrupt:    
+        print("\nOperation cancelled by the user")
         sys.exit(1)    
     
 if __name__ == "__main__":    
