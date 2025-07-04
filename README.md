@@ -34,7 +34,6 @@ The values are normally defined by the implementer.
 - Reads all possible files
 - Parses only the first field per line (e.g., IP, domain, or hash)
 - Each line shall include comma-separated fields, but only the first field is index (e.g., the IP or domain). 
-- Using disabled field in gui to indicate that there are other options.
 
 See example structure below:
 
@@ -46,14 +45,17 @@ d41d8cd98f00b204e9800998ecf8427e, Sweden --> hash
 ## Project structure
 ```
 .
+├── LICENSE
 ├── pictures
 │   ├── app-in-use.png
 │   └── app.png
 ├── README.md
+├── sample.txt
 ├── src
 │   ├── gui.py
 │   ├── __init__.py
 │   └── main.py
+├── testips.txt
 └── utils
     ├── generate_queries.py
     ├── __init__.py

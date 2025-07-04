@@ -6,6 +6,7 @@ Date: 2025-07-02
 """
 
 VERSION = "1.0.0"
+AUTHOR = "olofmagn"
 
 import sys
 import questionary
@@ -28,7 +29,7 @@ BANNER = rf"""
 
 Welcome to the application!
 Enjoy using the app, and feel free to share any feature requests or feedback!
-Version: {VERSION}
+Version: {VERSION} {AUTHOR}
 """
 
 
