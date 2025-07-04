@@ -12,6 +12,7 @@ import questionary
 from colorama import init, Fore, Style
 from tkinter import ttk, filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
+from typing import Optional, List
 
 from utils.generate_queries import generate_query_from_args
 from utils.utility import get_logger
@@ -63,17 +64,15 @@ class QueryGeneratorGUI:
         self.hash_type_combobox = ttk.Combobox(self.frame, textvariable=self.hash_type_var, values=["md5", "sha1", "sha256"])
         self.hash_type_combobox.grid(row=3, column=1, columnspan=2, sticky="nsew", padx=2, pady=2)
 
-        # === QIDS ===
-        self.qid_label = ttk.Label(self.frame, text="QIDs (comma-separated):")
-        self.qid_label.grid(row=4, column=0, sticky="nsew", padx=2, pady=2)
+        # === QID/EA ===
+        self.input_label = ttk.Label(self.frame, text="QID:")
+        self.input_label.grid(row=4, column=0, sticky="w", padx=2, pady=2)
         self.qid_entry = ttk.Entry(self.frame)
-        self.qid_entry.grid(row=4, column=1, columnspan=2, sticky="nsew", padx=2, pady=2)
+        self.qid_entry.grid(row=4, column=1, columnspan=2, sticky="ew", padx=2, pady=2)
 
-        # === Event Actions ===
-        self.ea_label = ttk.Label(self.frame, text="Event Actions (comma-separated):")
-        self.ea_label.grid(row=5, column=0, sticky="nsew", padx=2, pady=2)
         self.ea_entry = ttk.Entry(self.frame)
-        self.ea_entry.grid(row=5, column=1, columnspan=2, sticky="nsew", padx=2, pady=2)
+        self.ea_entry.grid(row=4, column=1, columnspan=2, sticky="ew", padx=2, pady=2)
+        self.ea_entry.grid_remove()  # Hide by default
 
         # === Time range ===
         ttk.Label(self.frame, text="Time Range:").grid(row=6, column=0, sticky="w", padx=2)
@@ -82,7 +81,7 @@ class QueryGeneratorGUI:
         self.lookback_var = tk.StringVar(value=self.TIME_RANGES[1])  # default "10 MINUTES"
         self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=15)
         self.time_entry.pack(side="left")
-
+        
         self.btn_time_prev = ttk.Button(time_frame, text="❮", style="Arrow.TButton", padding=(6,0), width=2, command=lambda: self.change_time_range(-1))
         self.btn_time_prev.pack(side="left", padx=1)
         self.btn_time_next = ttk.Button(time_frame, text="❯", style="Arrow.TButton", padding=(6,0), width=2, command=lambda: self.change_time_range(1))
@@ -165,28 +164,20 @@ class QueryGeneratorGUI:
             "-l", self.lookback_var.get()
         ]
 
-        # Validation of optional fields
-        if self.qid_entry.get():
-            qids = self.qid_entry.get().split(",")
-            for qid in qids:
-                if not qid.strip().isdigit():
-                    messagebox.showerror("Invalid QID", f"QID '{qid}' must be an integer.")
-                    self.logger.error(f"Invalid QID - QID '{qid}' must be an integer.")
-                    return 0
 
-            args.extend(["-q"] + [qid.strip() for qid in qids])
-
-        if self.ea_entry.get():
-            event_actions = self.ea_entry.get().split(",")
-            for ea in event_actions:
-                ea = ea.strip()
-                if not ea:
-                    messagebox.showerror("Invalid input","Event action can not be empty.")
-                    self.logger.error("Invalid input", "Event action can not be empty")
-                    return 0
-
-            args.extend(["-ea"] + self.ea_entry.get().split(","))
-
+        if self.mode_var.get() == "aql":
+            qids = self.validate_comma_separated_input(self.qid_entry.get(), "QID", is_numeric=True)
+            if qids is None:
+                return 0
+            if qids:  # Only extend if non-empty
+                args.extend(["-q"] + qids)
+        
+        elif self.mode_var.get() == "ea":
+            eas = self.validate_comma_separated_input(self.ea_entry.get(), "EA")
+            if eas is None:
+                return 0
+            if eas:
+                args.extend(["-ea"] + eas)
         try:
             query = generate_query_from_args(args)
             self.output_text.delete("1.0", tk.END)
@@ -196,6 +187,26 @@ class QueryGeneratorGUI:
         except Exception as e:
             messagebox.showerror("Error", str(e))
             sys.exit(1)
+
+    def validate_comma_separated_input(self, raw_input: str, label: str, is_numeric: bool = False) -> Optional[List[str]]:
+        stripped_input = raw_input.strip()
+
+        if not stripped_input:
+            return []  # No input provided, and that's allowed
+
+        items = [item.strip() for item in stripped_input.split(",")]
+
+        for item in items:
+            if not item:
+                messagebox.showerror("Invalid input", f"{label} contains an empty entry.")
+                self.logger.error(f"{label} contains an empty entry.")
+                return None
+            if is_numeric and not item.isdigit():
+                messagebox.showerror("Invalid input", f"{label} '{item}' must be an valid integer.")
+                self.logger.error(f"Invalid {label} - '{item}' must be an integer.")
+                return None
+
+        return items
 
     def copy_to_clipboard(self):
         """
@@ -211,36 +222,39 @@ class QueryGeneratorGUI:
             self.logger.info("Query copied to clipboard")
 
     def update_field_visibility(self):
-        """
-        Update field visibility based on the platform
-        """
+        mode = self.mode_var.get().lower()
 
-        mode = self.mode_var.get()
-
+        # Update label/info if needed
         visibility_map = {
             "aql": {
-                "ea": "disabled",
-                "qid": "normal",
                 "info": "Using AQL Search query mode"
             },
             "es": {
-                "ea": "normal",
-                "qid": "disabled",
                 "info": "Using Elastic Search query mode"
             },
             "defender": {
-                "ea": "disabled",
-                "qid": "disabled",
                 "info": "Using Defender Search query mode"
             }
         }
 
-        config = visibility_map.get(mode, {})
-        self.set_widget_state(self.ea_label, self.ea_entry, config.get("ea", "disabled"))
-        self.set_widget_state(self.qid_label, self.qid_entry, config.get("qid", "disabled"))
-        self.platform_info_label.config(text=config.get("info", ""))
+        
+        if mode in visibility_map:
+            self.platform_info_label.config(text=visibility_map[mode]["info"])
 
-    def set_widget_state(self, label: tk.Label, entry: tk.Entry, state: str, clear: bool=True) -> None:
+        # Handle toggle menu + entries visibility with defender
+        
+        if mode == "aql":
+            self.input_label.config(text="QID:")
+            self.qid_entry.grid()
+        elif mode == "es":
+            self.input_label.config(text="EA:")
+            self.ea_entry.grid()
+        else:
+            self.qid_entry.grid_remove()
+            self.ea_entry.grid_remove()
+            self.input_label.config(text="")
+
+    def set_widget_state(self, label: tk.Label, entry: tk.Entry, state: str, clear: bool = True) -> None:
         """
         Sets the widget state based on platform
         """
@@ -252,17 +266,36 @@ class QueryGeneratorGUI:
             entry.delete(0, 'end')
             entry.insert(0, "")
 
+    def toggle_input(self, selection):
+        """
+        Toggle input
+        """
+
+        self.qid_entry.grid_remove()
+        self.ea_entry.grid_remove()
+
+        match selection:
+            case "qid":
+                self.qid_entry.grid(row=4, column=1, columnspan=2, sticky="ew", padx=2, pady=2)
+            case "ea":
+                self.ea_entry.grid(row=4, column=1, columnspan=2, sticky="ew", padx=2, pady=2)
+            case _:
+                return None
+
     def update_hash_type_visibility(self):
-        """
-        Update hash type visibility
-        """
 
-        self.hash_type_label.configure(text="Hash Type:")
+        """
+        Show or hide the hash type selector depending on the selected type.
+        """
+        is_hash_type = self.type_var.get() not in ("ip", "domain")
+        self.hash_type_label.config(text="Hash Type:")
 
-        if self.type_var.get() in ("ip", "domain"):
-            self.hash_type_combobox.configure(state="disabled")
+        if is_hash_type:
+            self.hash_type_combobox.grid() 
+            self.hash_type_label.grid()     
         else:
-            self.hash_type_combobox.configure(state="normal")
+            self.hash_type_combobox.grid_remove()  
+            self.hash_type_label.grid_remove()   
 
     def change_time_range(self, direction: int) -> None:
         """
