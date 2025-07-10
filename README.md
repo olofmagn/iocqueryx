@@ -42,7 +42,7 @@ See example structure below:
 evil.com, Sweden --> domain
 d41d8cd98f00b204e9800998ecf8427e, Sweden --> hash
 ```
-## Project structure
+## File structure
 ```
 .
 ├── LICENSE
@@ -50,16 +50,16 @@ d41d8cd98f00b204e9800998ecf8427e, Sweden --> hash
 │   ├── app-in-use.png
 │   └── app.png
 ├── README.md
-├── sample.txt
 ├── src
 │   ├── gui.py
 │   ├── __init__.py
 │   └── main.py
 ├── testips.txt
 └── utils
+    ├── configuration.py
     ├── generate_queries.py
-    ├── __init__.py
-    └── utility.py
+    └── __init__.py
+
 ```
 ## Usage
 This tool supports two modes of operation:
