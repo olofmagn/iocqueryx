@@ -13,16 +13,23 @@ from colorama import init, Fore, Style
 from tkinter import ttk, filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
 from typing import Optional, List
+from tkinter import StringVar
 
 from utils.generate_queries import generate_query_from_args
 from utils.utility import get_logger
+from utils.utility import normalize_lookback
 
 class QueryGeneratorGUI:
-    TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
     def __init__(self, root):
         self.logger = get_logger()
         self.saved_qid_input = ""
         self.saved_ea_input = ""
+
+        self.INTERNAL_TIME_RANGES = ["5m", "10m", "30m", "1h", "3h", "12h", "1d"]
+        self.DISPLAY_TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
+
+        self.internal_to_display = dict(zip(self.INTERNAL_TIME_RANGES, self.DISPLAY_TIME_RANGES))
+        self.display_to_internal = dict(zip(self.DISPLAY_TIME_RANGES, self.INTERNAL_TIME_RANGES))
 
         self.root = root
         self.root.title("IocQueryX - IOC Hunting Query Generator")
@@ -81,7 +88,7 @@ class QueryGeneratorGUI:
         ttk.Label(self.frame, text="Time Range:").grid(row=6, column=0, sticky="w", padx=2)
         time_frame = ttk.Frame(self.frame)
         time_frame.grid(row=6, column=1, columnspan=2, sticky="w", padx=2, pady=2)
-        self.lookback_var = tk.StringVar(value=self.TIME_RANGES[1])  # default "10 MINUTES"
+        self.lookback_var = tk.StringVar(value=self.DISPLAY_TIME_RANGES[1])  # default "10 MINUTES"
         self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=15)
         self.time_entry.pack(side="left")
         
@@ -169,6 +176,13 @@ class QueryGeneratorGUI:
             "-l", self.lookback_var.get()
         ]
 
+
+        lookback = self.lookback_var.get()
+        duration = normalize_lookback(lookback, self.mode_var.get())
+
+        if duration is None:
+            messagebox.showerror("Error", "Invalid time range")
+            return 0
 
         if self.mode_var.get() == "aql":
             qids = self.validate_comma_separated_input(self.qid_entry.get(), "QID", is_numeric=True)
@@ -316,13 +330,23 @@ class QueryGeneratorGUI:
             self.hash_type_label.grid_remove()   
 
     def change_time_range(self, direction: int) -> None:
-        """
-        Change time range based on the direction.
-        """
+        current = self.lookback_var.get().strip().upper()
 
-        current = self.lookback_var.get()
+        if current in self.display_to_internal:
+            internal = self.display_to_internal[current]
+        else:
+            internal = current.lower()
 
-        if current in self.TIME_RANGES:
-            idx = self.TIME_RANGES.index(current)
-            new_idx = (idx + direction) % len(self.TIME_RANGES)
-            self.lookback_var.set(self.TIME_RANGES[new_idx])
+            if internal in self.internal_to_display:
+                pass
+            else:
+                internal = self.INTERNAL_TIME_RANGES[0]
+
+        # Find index in internal list for cycling
+        idx = self.INTERNAL_TIME_RANGES.index(internal)
+        new_idx = (idx + direction) % len(self.INTERNAL_TIME_RANGES)
+
+        # Update display label in entry
+        new_display = self.internal_to_display[self.INTERNAL_TIME_RANGES[new_idx]]
+        self.lookback_var.set(new_display)
+
