@@ -153,22 +153,22 @@ class QueryGeneratorGUI:
         
         # Validate required fields
         if not self.input_entry_var.get():
-            messagebox.showerror("Input missing", "Please select an input file")
-            self.logger.error("Input missing. Please select an input file")
+            messagebox.showerror("Input missing.", " Please select an input file.")
+            self.logger.error("Input missing. Please select an input file.")
             return 0
         
-        if not self.mode_var.get():
-            messagebox.showerror("Input missing", "Please enter a valid mode")
-            self.logger.error("Input missing. Please enter a valid mode")
+        if self.type_var.get() not in ("ip", "domain", "hash"):
+            messagebox.showerror("Input missing.", " Please enter a valid type.")
+            self.logger.error("Input missing. Please enter a valid type.")
             return 0
 
-        if not self.type_var.get():
-            messagebox.showerror("Input missing", "Please enter a valid type")
-            self.logger.error("Input missing. Please enter a valid type")
+        if self.hash_type_var.get() not in ("md5", "sha1", "sha256"):
+            messagebox.showerror("Input invalid.", " Please select a valid hash type.")
             return 0
 
-        if self.type_mode_var.get() not in ("aql, defender, es"):
-            messagebox.showerror("Invalid input", "Please enter a valid mode")
+        if self.mode_var.get() not in ("aql", "defender", "es"):
+            messagebox.showerror("Invalid input.", " Please enter a valid mode.")
+            self.logger.error("Invalid input." " Please enter a valid mode.")
             return 0
         
         # Build base args
@@ -290,10 +290,11 @@ class QueryGeneratorGUI:
             self.ea_entry.insert(0, self.saved_ea_input)
 
             self.qid_entry.grid_remove()
-
-        else:
+        
+        elif mode == "defender":
             self.qid_entry.grid_remove()
             self.ea_entry.grid_remove()
+
             self.input_label.config(text="")
 
     def _update_hash_type_visibility(self) -> None:
@@ -301,26 +302,28 @@ class QueryGeneratorGUI:
         """
         Show or hide the hash type selector depending on the selected type.
         """
-        is_hash_type = self.type_var.get() not in ("ip", "domain")
+        is_hash_type = self.type_var.get() == "hash"
         self.hash_type_label.config(text="Hash Type:")
 
         if is_hash_type:
             self.hash_type_combobox.grid() 
             self.hash_type_label.grid()     
         else:
-            self.hash_type_combobox.grid_remove()  
-            self.hash_type_label.grid_remove()   
+            self.hash_type_combobox.grid_remove()
+            self.hash_type_label.grid_remove()
 
     def _change_time_range(self, direction: int) -> None:
         current = self.lookback_var.get().strip().upper()
 
         if current in self.display_to_internal:
             internal = self.display_to_internal[current]
+
         else:
             internal = current.lower()
 
             if internal in self.internal_to_display:
                 pass
+
             else:
                 internal = self.INTERNAL_TIME_RANGES[0]
 
