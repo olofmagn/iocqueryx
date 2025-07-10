@@ -12,6 +12,7 @@ import logging
 
 from typing import Optional, List, Dict
 
+
 """
 Utility functions
 """
@@ -134,74 +135,42 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def normalize_lookback(lookback: str, platform: str) -> None:
+def normalize_lookback(lookback: str, mode: str) -> str:
+
     """
-    Normalizes the lookback to get correct values in elastic, qradar and defender.
+    Normalises lookback values for Defender/Elastic platform.
 
     Args:
-    - lookback (str): A lookback value normalised in the correct syntax.
-    - platform (str): A platform 'aql', 'es' or 'defender'.
+    - lookback (str): The string value to transform to correct format.
+    - mode (str): The mode 'defender', 'es' or 'aql'.
+
+    Returns:
+    - str: A lookback value in the correct format for query iteration.
     """
+    lookback = lookback.strip().lower()
+    match = re.match(r"(\d+)\s*(minutes?|hours?|days?|min|m|h|d)", lookback, re.IGNORECASE)
 
-    if not lookback:
-        # default lookback
-        lookback = "30 MINUTES"
+    if not match:
+        return None
 
-    lookback = lookback.strip().upper()
+    value, unit = match.groups()
+    value = int(value)
 
-    # CLI style (e.g. "10m", "5h", "1d")
-    cli_pattern = r"^(\d+)([mhdMHD])$"
-    match = re.match(cli_pattern, lookback)
+    # Positive values
+    if value <= 0:
+        value = 1
 
-    if match:
-        value, unit = m.groups()
-        # Map short units to long units
-        short_to_long = {
-            "M": "MINUTES",
-            "H": "HOURS",
-            "D": "DAYS",
-        }
+    is_defender_or_elastic = mode in ("defender", "es")
 
-        if unit not in short_to_long:
-            raise ValueError(f"Unsupported unit '{unit}' in CLI style lookback")
-        normalized_unit = short_to_long[unit]
-    else:
-        # Try GUI style (e.g. "10 MINUTES") because we derive the logic from Qradar
-        parts = lookback.split()
-        if len(parts) != 2:
-            raise ValueError(f"Invalid lookback format: '{lookback}' (expected '<value> <unit>')")
+    match unit:
+        case "minute" | "minutes" | "min" | "m":
+            return f"{value}m" if is_defender_or_elastic else f"{value} MINUTES"
+        case "hour" | "hours" | "h":
+            return f"{value}h" if is_defender_or_elastic else f"{value} HOURS"
+        case "day" | "days" | "d":
+            return f"{value*24}h" if is_defender_or_elastic else f"{value} DAYS"
+        case _:
+            return None
 
-        value, unit = parts
-        # Normalize unit plurals
-        long_units = {
-            "MINUTE": "MINUTES",
-            "MINUTES": "MINUTES",
-            "HOUR": "HOURS",
-            "HOURS": "HOURS",
-            "DAY": "DAYS",
-            "DAYS": "DAYS",
-        }
 
-        if unit not in long_units:
-            raise ValueError(f"Unsupported unit '{unit}' in GUI style lookback")
-        normalized_unit = long_units[unit]
-
-    if platform == "aql":
-        # For AQL, keep long form with space
-        return f"{value} {normalized_unit}"
-
-    elif platform in ("es", "defender"):
-        # For ES and Defender, convert long unit to short unit
-        short_unit_map = {
-            "MINUTES": "m",
-            "HOURS": "h",
-            "DAYS": "d",
-        }
-        short_unit = short_unit_map.get(normalized_unit)
-
-        if not short_unit:
-            raise ValueError(f"Unsupported unit '{normalized_unit}' for platform '{platform}'")
-        return f"{value}{short_unit}"
-    else:
-        raise ValueError(f"Unknown platform '{platform}'")
 
