@@ -21,6 +21,9 @@ class QueryGeneratorGUI:
     TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
     def __init__(self, root):
         self.logger = get_logger()
+        self.saved_qid_input = ""
+        self.saved_ea_input = ""
+
         self.root = root
         self.root.title("IocQueryX - IOC Hunting Query Generator")
         self.root.minsize(500, 400)  # optional minimum size
@@ -110,7 +113,7 @@ class QueryGeneratorGUI:
         self.copyright_label = ttk.Label(
         self.frame, text="© 2025 olofmagn", font=("Segoe UI", 8, "italic"), foreground="gray50"
         )
-        self.copyright_label.grid(row=12, column=2, sticky="w", pady=(0, 10), padx=5)
+        self.copyright_label.grid(row=12, columnspan=3, column=2, sticky="w", pady=(0, 10), padx=5)
 
     def setup_trace_callbacks(self) -> None:
         """
@@ -138,6 +141,8 @@ class QueryGeneratorGUI:
         """
         Generate query based on fetch elements from args
         """
+
+        args = []
         
         # Validate required fields
         if not self.input_entry.get():
@@ -172,11 +177,11 @@ class QueryGeneratorGUI:
             if qids:  # Only extend if non-empty
                 args.extend(["-q"] + qids)
         
-        elif self.mode_var.get() == "ea":
+        elif self.mode_var.get() == "es":
             eas = self.validate_comma_separated_input(self.ea_entry.get(), "EA")
             if eas is None:
                 return 0
-            if eas:
+            if eas: # Only extend if non-empty
                 args.extend(["-ea"] + eas)
         try:
             query = generate_query_from_args(args)
@@ -192,7 +197,7 @@ class QueryGeneratorGUI:
         stripped_input = raw_input.strip()
 
         if not stripped_input:
-            return []  # No input provided, and that's allowed
+            return []  
 
         items = [item.strip() for item in stripped_input.split(",")]
 
@@ -237,18 +242,31 @@ class QueryGeneratorGUI:
             }
         }
 
-        
         if mode in visibility_map:
             self.platform_info_label.config(text=visibility_map[mode]["info"])
 
         # Handle toggle menu + entries visibility with defender
-        
+
         if mode == "aql":
+            self.saved_ea_input = self.ea_entry.get()
+
             self.input_label.config(text="QID:")
             self.qid_entry.grid()
+            self.qid_entry.delete(0, tk.END)
+            self.qid_entry.insert(0, self.saved_qid_input)
+
+            self.ea_entry.grid_remove()
+
         elif mode == "es":
+            self.saved_qid_input = self.qid_entry.get()
+
             self.input_label.config(text="EA:")
             self.ea_entry.grid()
+            self.ea_entry.delete(0, tk.END)
+            self.ea_entry.insert(0, self.saved_ea_input)
+
+            self.qid_entry.grid_remove()
+
         else:
             self.qid_entry.grid_remove()
             self.ea_entry.grid_remove()

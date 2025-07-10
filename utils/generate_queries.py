@@ -48,7 +48,7 @@ def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int
                 "Unsupported item_type. Must be 'ip', 'domain' or 'file hash'")
 
     qid_condition = build_conditions(
-        "qid", qids, operator="and", wrap_values=True, comparator="=")
+        "qid", qids, operator="or", wrap_values=True, comparator="=")
     conditions = " or ".join([f"{field}='{item}'" for item in items])
 
     if qid_condition:
@@ -89,11 +89,11 @@ def generate_elastic_query(items: List[str], item_type: str, event_actions: Opti
             raise ValueError(
                 "Unsupported item_type. Must be 'ip', 'domain' or 'file hash'")
 
-    event_action_condition = build_conditions("event.action", event_actions, operator="and", wrap_values=True, quote_char="'", comparator=":")
+    event_action_condition = build_conditions("event.action", event_actions, operator="or", wrap_values=True, quote_char="'", comparator=":")
     conditions = " or ".join([f"{field}:'{item}'" for item in items])
 
     if event_action_condition:
-        query = f"{conditions} and {event_action_condition} and @timestamp >= now-{lookback}"
+        query = f"{conditions} and ({event_action_condition}) and @timestamp >= now-{lookback}"
     else:
         query = f"{conditions} and @timestamp >= now-{lookback}"
 
