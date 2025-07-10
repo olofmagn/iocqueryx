@@ -51,8 +51,8 @@ class QueryGeneratorGUI:
 
         # === Input file ===
         ttk.Label(self.frame, text="Input File:").grid(row=0, column=0, sticky="w", padx=2, pady=2)
-        self.input_entry = ttk.Entry(self.frame)
-        self.input_entry.grid(row=0, column=1, sticky="nsew", padx=2, pady=2)
+        self.input_entry_var = ttk.Entry(self.frame)
+        self.input_entry_var.grid(row=0, column=1, sticky="nsew", padx=2, pady=2)
         ttk.Button(self.frame, text="Browse", command=self._browse_file).grid(row=0, column=2, sticky="ew", padx=2, pady=2)
 
         # === Mode selection ===
@@ -138,8 +138,8 @@ class QueryGeneratorGUI:
         try:
             file_path = filedialog.askopenfilename(filetypes=[("All files", "*.*")])
             if file_path:
-                self.input_entry.delete(0, tk.END)
-                self.input_entry.insert(0, file_path)
+                self.input_entry_var.delete(0, tk.END)
+                self.input_entry_var.insert(0, file_path)
         except Exception as e:
             messagebox.showerror(f"Error", "Failed to load file: {e}")
             sys.exit(1)
@@ -152,7 +152,7 @@ class QueryGeneratorGUI:
         args = []
         
         # Validate required fields
-        if not self.input_entry.get():
+        if not self.input_entry_var.get():
             messagebox.showerror("Input missing", "Please select an input file")
             self.logger.error("Input missing. Please select an input file")
             return 0
@@ -166,10 +166,14 @@ class QueryGeneratorGUI:
             messagebox.showerror("Input missing", "Please enter a valid type")
             self.logger.error("Input missing. Please enter a valid type")
             return 0
+
+        if self.type_mode_var.get() not in ("aql, defender, es"):
+            messagebox.showerror("Invalid input", "Please enter a valid mode")
+            return 0
         
         # Build base args
         args = [
-            "-i", self.input_entry.get(),
+            "-i", self.input_entry_var.get(),
             "-m", self.mode_var.get(),
             "-t", self.type_var.get(),
             "-ht", self.hash_type_var.get(),
