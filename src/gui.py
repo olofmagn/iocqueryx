@@ -16,8 +16,8 @@ from typing import Optional, List
 from tkinter import StringVar
 
 from utils.generate_queries import generate_query_from_args
-from utils.utility import get_logger
-from utils.utility import normalize_lookback
+from utils.configuration import get_logger
+from utils.configuration import normalize_lookback
 
 class QueryGeneratorGUI:
     def __init__(self, root) -> None:

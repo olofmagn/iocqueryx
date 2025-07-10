@@ -158,7 +158,7 @@ def normalize_lookback(lookback: str, mode: str) -> str:
 
     # Positive values
     if value <= 0:
-        value = 1
+        return None
 
     is_defender_or_elastic = mode in ("defender", "es")
 
@@ -171,6 +171,3 @@ def normalize_lookback(lookback: str, mode: str) -> str:
             return f"{value*24}h" if is_defender_or_elastic else f"{value} DAYS"
         case _:
             return None
-
-
-

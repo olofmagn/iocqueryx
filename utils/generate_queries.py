@@ -7,8 +7,8 @@ Date: 2025-07-02
 
 from typing import List, Optional
 
-from utils.utility import create_parser, extract_items, normalize_lookback
-from utils.utility import build_conditions
+from utils.configuration import create_parser, extract_items, normalize_lookback
+from utils.configuration import build_conditions
 
 """
 Generate queries based on provided platform 'aql', 'elastic' or 'defender
