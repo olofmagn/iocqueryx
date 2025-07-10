@@ -113,7 +113,7 @@ class QueryGeneratorGUI:
         self.copyright_label = ttk.Label(
         self.frame, text="© 2025 olofmagn", font=("Segoe UI", 8, "italic"), foreground="gray50"
         )
-        self.copyright_label.grid(row=12, columnspan=3, column=2, sticky="w", pady=(0, 10), padx=5)
+        self.copyright_label.grid(row=13, column=2, sticky="e", pady=(0, 10), padx=5)
 
     def setup_trace_callbacks(self) -> None:
         """
