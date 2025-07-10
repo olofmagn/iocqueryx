@@ -14,7 +14,7 @@ from utils.utility import build_conditions
 Generate queries based on provided platform 'aql', 'elastic' or 'defender
 """
 
-def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int]] = None, hash_type: str = "sha256", lookback: str=None) -> str:
+def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int]] = None, hash_type: str = "sha256", lookback: str = None) -> str:
     """
     Generate an AQL query filtering by IP or domain and qid.
 
@@ -59,7 +59,7 @@ def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int
     return query
 
 
-def generate_elastic_query(items: List[str], item_type: str, event_actions: Optional[List[str]] = None, hash_type: str = "sha256", lookback: str=None) -> str:
+def generate_elastic_query(items: List[str], item_type: str, event_actions: Optional[List[str]] = None, hash_type: str = "sha256", lookback: str = None) -> str:
     """
     Args:
     - items (List[str]): A list of items.
@@ -100,7 +100,7 @@ def generate_elastic_query(items: List[str], item_type: str, event_actions: Opti
     return query
 
 
-def generate_defender_query(items: List[str], item_type: str, hash_type: str = "sha256", lookback: str=None) -> str:
+def generate_defender_query(items: List[str], item_type: str, hash_type: str = "sha256", lookback: str = None) -> str:
     """
     Args:
     - items (List[str]): A list of items e.g., ip, domains, or hashes
@@ -134,7 +134,7 @@ def generate_defender_query(items: List[str], item_type: str, hash_type: str = "
     conditions = " or ".join([f"{field} contains '{item}'" for item in items])
     return f"{table}\n | where {conditions} \n | where Timestamp > ago({lookback})"
 
-def generate_query_from_args(args: str, parser=None) -> str:
+def generate_query_from_args(args: str, parser = None) -> str:
     """
     Parses the given arguments and generates a threat hunting query
 

@@ -20,7 +20,7 @@ from utils.utility import get_logger
 from utils.utility import normalize_lookback
 
 class QueryGeneratorGUI:
-    def __init__(self, root):
+    def __init__(self, root) -> None:
         self.logger = get_logger()
         self.saved_qid_input = ""
         self.saved_ea_input = ""
@@ -39,12 +39,12 @@ class QueryGeneratorGUI:
         self.frame = ttk.Frame(root, padding=10)
         self.frame.pack(fill=tk.BOTH, expand=True)
 
-        self.create_widgets()
-        self.setup_trace_callbacks()
-        self.update_field_visibility()
-        self.update_hash_type_visibility()
+        self._create_widgets()
+        self._setup_trace_callbacks()
+        self._update_mode_visibility()
+        self._update_hash_type_visibility()
 
-    def create_widgets(self) -> None:
+    def _create_widgets(self) -> None:
         """
         Create all widgets
         """
@@ -53,7 +53,7 @@ class QueryGeneratorGUI:
         ttk.Label(self.frame, text="Input File:").grid(row=0, column=0, sticky="w", padx=2, pady=2)
         self.input_entry = ttk.Entry(self.frame)
         self.input_entry.grid(row=0, column=1, sticky="nsew", padx=2, pady=2)
-        ttk.Button(self.frame, text="Browse", command=self.browse_file).grid(row=0, column=2, sticky="ew", padx=2, pady=2)
+        ttk.Button(self.frame, text="Browse", command=self._browse_file).grid(row=0, column=2, sticky="ew", padx=2, pady=2)
 
         # === Mode selection ===
         ttk.Label(self.frame, text="Mode:").grid(row=1, column=0, sticky="nsew", padx=2, pady=2)
@@ -92,20 +92,20 @@ class QueryGeneratorGUI:
         self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=15)
         self.time_entry.pack(side="left")
         
-        self.btn_time_prev = ttk.Button(time_frame, text="❮", style="Arrow.TButton", padding=(6,0), width=2, command=lambda: self.change_time_range(-1))
+        self.btn_time_prev = ttk.Button(time_frame, text="❮", style="Arrow.TButton", padding=(6,0), width=2, command=lambda: self._change_time_range(-1))
         self.btn_time_prev.pack(side="left", padx=1)
-        self.btn_time_next = ttk.Button(time_frame, text="❯", style="Arrow.TButton", padding=(6,0), width=2, command=lambda: self.change_time_range(1))
+        self.btn_time_next = ttk.Button(time_frame, text="❯", style="Arrow.TButton", padding=(6,0), width=2, command=lambda: self._change_time_range(1))
         self.btn_time_next.pack(side="right", padx=1)
 
         # === Generate query ===
-        ttk.Button(self.frame, text="Generate Query", command=self.generate_query).grid(row=7, column=0, columnspan=3, pady=10, sticky="nsew", padx=2)
+        ttk.Button(self.frame, text="Generate Query", command=self._generate_query).grid(row=7, column=0, columnspan=3, pady=10, sticky="nsew", padx=2)
 
         # === Output text ===
         self.output_text = ScrolledText(self.frame, height=10, wrap=tk.WORD)
         self.output_text.grid(row=8, column=0, columnspan=3, sticky="nsew", pady=5, padx=2)
         
         # === Copy to Clipboard ===
-        ttk.Button(self.frame, text="Copy to Clipboard", command=self.copy_to_clipboard).grid(row=9, column=0, columnspan=3, pady=5, sticky="nsew", padx=2)
+        ttk.Button(self.frame, text="Copy to Clipboard", command=self._copy_to_clipboard).grid(row=9, column=0, columnspan=3, pady=5, sticky="nsew", padx=2)
         
         # === Separator ===
         separator = ttk.Separator(self.frame, orient='horizontal')
@@ -122,15 +122,15 @@ class QueryGeneratorGUI:
         )
         self.copyright_label.grid(row=13, column=2, sticky="e", pady=(0, 10), padx=5)
 
-    def setup_trace_callbacks(self) -> None:
+    def _setup_trace_callbacks(self) -> None:
         """
         Setup trace callbacks
         """
 
-        self.mode_var.trace_add("write", lambda *args: self.update_field_visibility())
-        self.type_var.trace_add("write", lambda *args: self.update_hash_type_visibility())
+        self.mode_var.trace_add("write", lambda *args: self._update_mode_visibility())
+        self.type_var.trace_add("write", lambda *args: self._update_hash_type_visibility())
 
-    def browse_file(self) -> None:
+    def _browse_file(self) -> None:
         """
         Browser and insert files
         """
@@ -144,7 +144,7 @@ class QueryGeneratorGUI:
             messagebox.showerror(f"Error", "Failed to load file: {e}")
             sys.exit(1)
 
-    def generate_query(self) -> None:
+    def _generate_query(self) -> None:
         """
         Generate query based on fetch elements from args
         """
@@ -185,18 +185,23 @@ class QueryGeneratorGUI:
             return 0
 
         if self.mode_var.get() == "aql":
-            qids = self.validate_comma_separated_input(self.qid_entry.get(), "QID", is_numeric=True)
+            qids = self._validate_comma_separated_input(self.qid_entry.get(), "QID", is_numeric=True)
+
             if qids is None:
                 return 0
+
             if qids:  # Only extend if non-empty
                 args.extend(["-q"] + qids)
         
         elif self.mode_var.get() == "es":
-            eas = self.validate_comma_separated_input(self.ea_entry.get(), "EA")
+            eas = self._validate_comma_separated_input(self.ea_entry.get(), "EA")
+
             if eas is None:
                 return 0
+
             if eas: # Only extend if non-empty
                 args.extend(["-ea"] + eas)
+
         try:
             query = generate_query_from_args(args)
             self.output_text.delete("1.0", tk.END)
@@ -207,7 +212,7 @@ class QueryGeneratorGUI:
             messagebox.showerror("Error", str(e))
             sys.exit(1)
 
-    def validate_comma_separated_input(self, raw_input: str, label: str, is_numeric: bool = False) -> Optional[List[str]]:
+    def _validate_comma_separated_input(self, raw_input: str, label: str, is_numeric: bool = False) -> Optional[List[str]]:
         stripped_input = raw_input.strip()
 
         if not stripped_input:
@@ -220,6 +225,7 @@ class QueryGeneratorGUI:
                 messagebox.showerror("Invalid input", f"{label} contains an empty entry.")
                 self.logger.error(f"{label} contains an empty entry.")
                 return None
+
             if is_numeric and not item.isdigit():
                 messagebox.showerror("Invalid input", f"{label} '{item}' must be an valid integer.")
                 self.logger.error(f"Invalid {label} - '{item}' must be an integer.")
@@ -227,7 +233,7 @@ class QueryGeneratorGUI:
 
         return items
 
-    def copy_to_clipboard(self):
+    def _copy_to_clipboard(self) -> None:
         """
         Copy text to clipboard
         """
@@ -240,7 +246,7 @@ class QueryGeneratorGUI:
             messagebox.showinfo("Copied", "Query copied to clipboard.")
             self.logger.info("Query copied to clipboard")
 
-    def update_field_visibility(self):
+    def _update_mode_visibility(self) -> None:
         mode = self.mode_var.get().lower()
 
         # Update label/info if needed
@@ -286,35 +292,7 @@ class QueryGeneratorGUI:
             self.ea_entry.grid_remove()
             self.input_label.config(text="")
 
-    def set_widget_state(self, label: tk.Label, entry: tk.Entry, state: str, clear: bool = True) -> None:
-        """
-        Sets the widget state based on platform
-        """
-
-        label.configure(state=state)
-        entry.configure(state=state)
-
-        if clear and state == "normal":
-            entry.delete(0, 'end')
-            entry.insert(0, "")
-
-    def toggle_input(self, selection):
-        """
-        Toggle input
-        """
-
-        self.qid_entry.grid_remove()
-        self.ea_entry.grid_remove()
-
-        match selection:
-            case "qid":
-                self.qid_entry.grid(row=4, column=1, columnspan=2, sticky="ew", padx=2, pady=2)
-            case "ea":
-                self.ea_entry.grid(row=4, column=1, columnspan=2, sticky="ew", padx=2, pady=2)
-            case _:
-                return None
-
-    def update_hash_type_visibility(self):
+    def _update_hash_type_visibility(self) -> None:
 
         """
         Show or hide the hash type selector depending on the selected type.
@@ -329,7 +307,7 @@ class QueryGeneratorGUI:
             self.hash_type_combobox.grid_remove()  
             self.hash_type_label.grid_remove()   
 
-    def change_time_range(self, direction: int) -> None:
+    def _change_time_range(self, direction: int) -> None:
         current = self.lookback_var.get().strip().upper()
 
         if current in self.display_to_internal:
