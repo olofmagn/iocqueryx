@@ -32,8 +32,7 @@ The values are normally defined by the implementer.
 
 ### Easy Input Handling
 - Reads all possible files
-- Parses only the first field per line (e.g., IP, domain, or hash)
-- Each line shall include comma-separated fields, but only the first field is index (e.g., the IP or domain). 
+- Parses only the first field per line (e.g., `ip`, `domain`, or `hash`) using comma-seperated logic.
 
 See example structure below:
 
@@ -93,12 +92,11 @@ Version: 1.0.0 olofmagn
 
 <img src="pictures/app.png" alt="qradar gui" width="400"/>
 
-Example usage of an input file of IP addresses, mode: aql and qid.
+Example usage of an input file of type: `ip`, mode: `aql` and `qid`.
 
 <img src="pictures/app-in-use.png" alt="app in use" width="400"/>
 
 ### CLI
-AQL Query (IP) with QID-number:
 ```python3
 python3 -m src.main -i sample.txt -m aql -t ip -q 20257872
 ```
