@@ -49,6 +49,7 @@ d41d8cd98f00b204e9800998ecf8427e, Sweden --> hash
 │   ├── app-in-use.png
 │   └── app.png
 ├── README.md
+├── requirements.txt
 ├── src
 │   ├── gui.py
 │   ├── __init__.py
@@ -58,8 +59,12 @@ d41d8cd98f00b204e9800998ecf8427e, Sweden --> hash
     ├── configuration.py
     ├── generate_queries.py
     └── __init__.py
-
 ```
+
+## Requirements
+- Python >= 3.0.
+- External dependencies as listed in `requirements.txt`.
+
 ## Usage
 This tool supports two modes of operation:
 
