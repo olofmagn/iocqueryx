@@ -58,20 +58,29 @@ class QueryGeneratorGUI:
         # === Mode selection ===
         ttk.Label(self.frame, text="Mode:").grid(row=1, column=0, sticky="nsew", padx=2, pady=2)
         self.mode_var = tk.StringVar(value="aql")
-        self.mode_combobox = ttk.Combobox(self.frame, textvariable=self.mode_var, values=["aql", "es", "defender"])
+        self.mode_combobox = ttk.Combobox(self.frame,
+                                          textvariable=self.mode_var, 
+                                          values=["aql", "es", "defender"],
+                                          state="readonly")
         self.mode_combobox.grid(row=1, column=1, columnspan=2, sticky="nsew", padx=2, pady=2)
 
         # === Type selection ===
         ttk.Label(self.frame, text="Type:").grid(row=2, column=0, sticky="nsew", padx=2, pady=2)
         self.type_var = tk.StringVar(value="ip")
-        self.type_combobox = ttk.Combobox(self.frame, textvariable=self.type_var, values=["ip", "domain", "hash"])
+        self.type_combobox = ttk.Combobox(self.frame, 
+                                          textvariable=self.type_var, 
+                                          values=["ip", "domain", "hash"],
+                                          state="readonly")
         self.type_combobox.grid(row=2, column=1, columnspan=2, sticky="nsew", padx=2, pady=2)
 
         # === Hash type ===
         self.hash_type_label = ttk.Label(self.frame, text="Hash Type:")
         self.hash_type_label.grid(row=3, column=0, sticky="nsew", padx=2, pady=2)
         self.hash_type_var = tk.StringVar(value="sha256")
-        self.hash_type_combobox = ttk.Combobox(self.frame, textvariable=self.hash_type_var, values=["md5", "sha1", "sha256"])
+        self.hash_type_combobox = ttk.Combobox(self.frame, 
+                                               textvariable=self.hash_type_var, 
+                                               values=["md5", "sha1", "sha256"],
+                                               state="readonly")
         self.hash_type_combobox.grid(row=3, column=1, columnspan=2, sticky="nsew", padx=2, pady=2)
 
         # === QID/EA ===
@@ -157,20 +166,6 @@ class QueryGeneratorGUI:
             self.logger.error("Input missing. Please select an input file.")
             return 0
         
-        if self.type_var.get() not in ("ip", "domain", "hash"):
-            messagebox.showerror("Input missing.", " Please enter a valid type.")
-            self.logger.error("Input missing. Please enter a valid type.")
-            return 0
-
-        if self.hash_type_var.get() not in ("md5", "sha1", "sha256"):
-            messagebox.showerror("Input invalid.", " Please select a valid hash type.")
-            return 0
-
-        if self.mode_var.get() not in ("aql", "defender", "es"):
-            messagebox.showerror("Invalid input.", " Please enter a valid mode.")
-            self.logger.error("Invalid input." " Please enter a valid mode.")
-            return 0
-        
         # Build base args
         args = [
             "-i", self.input_entry_var.get(),
@@ -179,7 +174,6 @@ class QueryGeneratorGUI:
             "-ht", self.hash_type_var.get(),
             "-l", self.lookback_var.get()
         ]
-
 
         lookback = self.lookback_var.get()
         duration = normalize_lookback(lookback, self.mode_var.get())
@@ -298,10 +292,10 @@ class QueryGeneratorGUI:
             self.input_label.config(text="")
 
     def _update_hash_type_visibility(self) -> None:
-
         """
         Show or hide the hash type selector depending on the selected type.
         """
+
         is_hash_type = self.type_var.get() == "hash"
         self.hash_type_label.config(text="Hash Type:")
 
