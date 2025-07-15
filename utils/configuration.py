@@ -97,6 +97,7 @@ def validate_file_path(file_path: str) -> bool:
     Returns:
     - bool: True if file path is valid string
     """
+
     return bool(file_path and file_path.strip())
 
 def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[str]:
@@ -131,6 +132,7 @@ def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
     Returns:
     - str: First column value
     """
+    
     return line.split(delimiter)[FIRST_COLUMN_INDEX]
 
 def extract_items(input_file: str) -> List[str]:

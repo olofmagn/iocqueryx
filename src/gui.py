@@ -146,6 +146,7 @@ def _validate_comma_separated_items(raw_input: str, is_numeric: bool = False) ->
     Args:
     - raw_input (str): Raw comma-separated input
     - is_numeric (bool): Whether items should be numeric
+    
     Returns:
     - tuple[bool, List[str], str]: (is_valid, items, error_message)
     """

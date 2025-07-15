@@ -81,8 +81,8 @@ def get_aql_field(item_type: str, hash_type: str = "sha256") -> str:
 
     Returns:
     - str: AQL field name
-
     """
+    
     if item_type not in SUPPORTED_ITEM_TYPES:
         raise ValueError(f"Unsupported item_type: {item_type}. Must be one of: {SUPPORTED_ITEM_TYPES}")
     
