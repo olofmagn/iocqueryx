@@ -183,7 +183,7 @@ def create_single_condition(field: str, value, comparator: str = "=", wrap_value
 def build_conditions(field: str, values: list, operator: str = "AND", wrap_values: bool = False, quote_char: str = "'", comparator: str = "=") -> str:
     """
     Build conditions.
-    
+
     Args:
     - field (str): The field name to filter on
     - values (list): List of values to include in the condition
@@ -215,6 +215,7 @@ def validate_time_value(value: int) -> bool:
 
     Args:
     - value (int): Time value to validate
+
     Returns:
     - bool: True if value is positive
     """
@@ -225,9 +226,11 @@ def normalize_time_unit(unit: str) -> Optional[str]:
     """
     Args:
     - unit (str): Time unit string to normalize
+
     Returns:
     - Optional[str]: Normalized unit (minutes/hours/days) or None if invalid
     """
+
     unit_lower = unit.lower()
     
     for normalized_unit, patterns in TIME_UNIT_PATTERNS.items():
@@ -242,6 +245,7 @@ def parse_lookback_string(lookback: str) -> Optional[tuple[int, str]]:
 
     Args:
     - lookback (str): Lookback string to parse (e.g., "24h", "7d")
+
     Returns:
     - Optional[tuple[int, str]]: (value, normalized_unit) or None if invalid
     """
@@ -302,9 +306,11 @@ def normalize_lookback(lookback: str, mode: str) -> Optional[str]:
     Args:
     - lookback (str): The string value to transform to correct format
     - mode (str): The mode 'defender', 'es' or 'aql'
+
     Returns:
     - Optional[str]: A lookback value in the correct format for query iteration
     """
+
     if not lookback or not mode:
         return None
     
@@ -401,6 +407,7 @@ def validate_mode(mode: str) -> bool:
 
     Args:
     - mode (str): Mode to validate
+
     Returns:
     - bool: True if mode is supported
     """
@@ -411,6 +418,7 @@ def validate_type(item_type: str) -> bool:
     """
     Args:
     - item_type (str): Type to validate
+
     Returns:
     - bool: True if type is supported
     """
@@ -421,6 +429,7 @@ def validate_hash_type(hash_type: str) -> bool:
     """
     Args:
     - hash_type (str): Hash type to validate
+    
     Returns:
     - bool: True if hash type is supported
     """
