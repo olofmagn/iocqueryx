@@ -226,7 +226,7 @@ def generate_defender_query(items: List[str], item_type: str, hash_type: str = "
     conditions = " or ".join([f"{field} contains '{item}'" for item in items])
     
     # Construct final query
-    return f"{table}\\n | where {conditions} \\n | where Timestamp > ago({lookback})"
+    return f"{table} \n | where {conditions} \n | where Timestamp > ago({lookback})"
 
 # =============================================================================
 # MAIN QUERY GENERATION ORCHESTRATOR
