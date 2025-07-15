@@ -24,6 +24,9 @@ class QueryGeneratorGUI:
         self.logger = get_logger()
         self.saved_qid_input = ""
         self.saved_ea_input = ""
+        self.MAX_WIDTH = 500
+        self.MAX_HEIGHT = 400
+        self.OUTPUT_HEIGHT = 10
 
         self.time_ranges = [
             ("5m", "5 MINUTES"),
@@ -35,7 +38,6 @@ class QueryGeneratorGUI:
             ("1d", "1 DAY")
         ]
 
-        # Add this after your time_ranges setup:
         self.MODE_CONFIGS = {
             "aql": {
                 "info": "Using AQL Search query mode",
@@ -61,7 +63,7 @@ class QueryGeneratorGUI:
 
         self.root = root
         self.root.title("IocQueryX - IOC Hunting Query Generator")
-        self.root.minsize(500, 400)  # optional minimum size
+        self.root.minsize(self.MAX_HEIGHT, self.MAX_WIDTH)  
         self.root.resizable(False, False)
 
         self.frame = ttk.Frame(root, padding=10)
@@ -84,7 +86,11 @@ class QueryGeneratorGUI:
 
     def _build_base_args(self) -> List[str]:
         """
-        Build the base arguments list for query generation
+         Args:
+         - base_args (List[str]): Base arguments to extend with mode-specific parameters.
+
+         Returns:
+         - Optional[List[str]]: Complete arguments list or None if validation fails.
         """
 
         return [
@@ -96,7 +102,10 @@ class QueryGeneratorGUI:
         ]
 
     def _validate_time_range(self) -> bool:
-        """Validate the selected time range"""
+        """
+        Validate the selected time range
+        """
+
         duration = normalize_lookback(self.current_lookback, self.current_mode)
         if duration is None:
             self._show_validation_error("Invalid time range")
@@ -105,7 +114,11 @@ class QueryGeneratorGUI:
 
     def _build_mode_specific_args(self, base_args: List[str]) -> Optional[List[str]]:
         """
-        Add mode-specific arguments to the base args
+        Args:
+        - base_args (List[str]): Base arguments to extend with mode-specific parameters.
+        
+        Returns:
+        - Optional[List[str]]: Complete arguments list or None if validation fails.
         """
 
         args = base_args.copy()
@@ -128,7 +141,8 @@ class QueryGeneratorGUI:
 
     def _display_query(self, query: str) -> None:
         """
-        Display the generated query in the output text widget
+        Args:
+        - query (str): The generated query string to display.
         """
 
         self.output_text.delete("1.0", tk.END)
@@ -137,6 +151,11 @@ class QueryGeneratorGUI:
     def _handle_error(self, title: str, message: str, exit_on_error: bool = False) -> None:
         """
         Centralized error handling with consistent behavior
+
+        Args:
+        - title (str): Error dialog title.
+        - message (str): Error mesage to display and log
+        - exit_on_error (bool): Whether to exit application on error
         """
 
         messagebox.showerror(title, message)
@@ -144,7 +163,6 @@ class QueryGeneratorGUI:
         if exit_on_error:
             sys.exit(1)
 
-    
     @property
     def current_mode(self) -> str:
         """
@@ -243,7 +261,7 @@ class QueryGeneratorGUI:
         ttk.Button(self.frame, text="Generate Query", command=self._generate_query).grid(row=7, column=0, columnspan=3, pady=10, sticky="nsew", padx=2)
 
         # === Output text ===
-        self.output_text = ScrolledText(self.frame, height=10, wrap=tk.WORD)
+        self.output_text = ScrolledText(self.frame, height=self.OUTPUT_HEIGHT, wrap=tk.WORD)
         self.output_text.grid(row=8, column=0, columnspan=3, sticky="nsew", pady=5, padx=2)
         
         # === Copy to Clipboard ===
@@ -294,11 +312,11 @@ class QueryGeneratorGUI:
         try:
             #Validate inputs
             if not self._validate_inputs():
-                return
+                return 0
             
             # Validate time range
             if not self._validate_time_range():
-                return
+                return 0
             
             # Build base arguments
             base_args = self._build_base_args()
@@ -306,7 +324,7 @@ class QueryGeneratorGUI:
             # Add mode-specific arguments
             final_args = self._build_mode_specific_args(base_args)
             if final_args is None:
-                return  # Error already shown by _build_mode_specific_args
+                return 0
             
             # Generate query
             query = generate_query_from_args(final_args)
@@ -322,6 +340,14 @@ class QueryGeneratorGUI:
     def _validate_comma_separated_input(self, raw_input: str, label: str, is_numeric: bool = False) -> Optional[List[str]]:
         """
         Validate comma-separated input with single-pass processing
+
+        Args:
+        - raw_input (str): Comma-seperated input string to validate.
+        - label (str): Field label for error message.
+        - is_numeric (bool): Whether to validate items as numeric values
+
+        Returns:
+        - Optional[List[str]]: List of valid items or None if validation fails.
         """
 
         if not raw_input.strip():
@@ -333,11 +359,11 @@ class QueryGeneratorGUI:
             self._show_validation_error(f"{label} contains no valid entries.")
             return None
         
-        # Validate numeric values in single pass if needed
+        # Validate numeric values
         if is_numeric:
             invalid_items = [item for item in items if not item.isdigit()]
             if invalid_items:
-                # Show ALL invalid items at once, not just the first one
+                # Show ALL invalid items
                 invalid_list = "', '".join(invalid_items)
                 self._show_validation_error(f"{label} contains invalid integers: '{invalid_list}'")
                 return None
@@ -347,6 +373,9 @@ class QueryGeneratorGUI:
     def _show_validation_error(self, message: str) -> None:
         """
         Helper method to centralize validation error handling
+
+        Args:
+        - message (str): Error message to display and log.
         """
         
         messagebox.showerror("Invalid input", message)
@@ -366,6 +395,10 @@ class QueryGeneratorGUI:
             self.logger.info("Query copied to clipboard")
 
     def _update_mode_visibility(self) -> None:
+        """
+        Update mode visibility
+        """
+        
         mode = self.current_mode
         config = self.MODE_CONFIGS.get(mode, self.MODE_CONFIGS["aql"])
         
@@ -415,7 +448,12 @@ class QueryGeneratorGUI:
             self.hash_type_label.grid_remove()
 
     def _change_time_range(self, direction: int) -> None:
-        current_display = self.lookback_var.get()
+        """
+        Args:
+        - direction (int): Direction to navigate (-1 for prev, 1 for next)
+        """
+
+        current_display = self.current_lookback
 
         try:
             current_idx = self.display_values.index(current_display)
