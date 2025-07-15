@@ -9,6 +9,7 @@ import re
 import sys
 import argparse
 import logging
+
 from typing import Optional, List, Dict
 
 # =============================================================================
@@ -100,11 +101,12 @@ def validate_file_path(file_path: str) -> bool:
 
 def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[str]:
     """
-    Read file lines
+    Read file lines.
 
     Args:
     - file_path (str): Path to the file to read
     - encoding (str): File encoding (default: utf-8)
+
     Returns:
     - List[str]: List of non-empty lines from the file
     """
@@ -113,9 +115,11 @@ def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[st
         with open(file_path, 'r', encoding=encoding) as f:
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError as e:
-        logger.error(f"File not found. Please check if you provided correct filepath {file_path}: {e}")
+        logger.error(f"File not found: {file_path}")
+        raise ValueError(f"No valid file provided or failed to read file. Check filepath.")
     except IOError as e:
-        logger.error(f"Something unexpected happened: {e}")
+        logger.error(f"File read error: {e}")
+        raise ValueError(f"No valid file provided or failed to read file. Check filepath.")
 
 def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
     """
@@ -286,6 +290,7 @@ def format_time_for_platform(value: int, unit: str, mode: str) -> str:
     - value (int): Time value
     - unit (str): Normalized time unit (minutes/hours/days)
     - mode (str): Platform mode (aql/es/defender)
+
     Returns:
     - str: Formatted time string for the platform
     """
@@ -449,7 +454,7 @@ def validate_hash_type(hash_type: str) -> bool:
 def validate_configuration_parameters(mode: str, item_type: str, hash_type: str = None) -> tuple[bool, str]:
     """
     Validate configuration parameters
-    
+
     Args:
     - mode (str): Mode to validate
     - item_type (str): Type to validate

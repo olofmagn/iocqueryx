@@ -7,12 +7,11 @@ Date: 2025-07-02
 
 import tkinter as tk
 import sys
+
 from typing import Optional, List
 
-from colorama import init, Fore, Style
 from tkinter import ttk, filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
-from tkinter import StringVar
 
 from utils.generate_queries import generate_query_from_args
 from utils.configuration import get_logger
@@ -96,7 +95,7 @@ COPYRIGHT_COLOR = "gray50"
 # TIME RANGE UTILITIES
 # =============================================================================
 
-def get_display_values() -> List[str]:
+def _get_display_values() -> List[str]:
     """
     Get display values
 
@@ -106,7 +105,7 @@ def get_display_values() -> List[str]:
 
     return [display for _, display in TIME_RANGES]
 
-def get_default_time_display() -> str:
+def _get_default_time_display() -> str:
     """
     Get default time range display value
 
@@ -114,9 +113,9 @@ def get_default_time_display() -> str:
     - str: Default time range display value
     """
 
-    return get_display_values()[DEFAULT_TIME_RANGE_INDEX]
+    return _get_display_values()[DEFAULT_TIME_RANGE_INDEX]
 
-def cycle_time_range_value(current_value: str, direction: int, display_values: List[str]) -> str:
+def _cycle_time_range_value(current_value: str, direction: int, display_values: List[str]) -> str:
     """
     Cycle time range value
 
@@ -140,7 +139,7 @@ def cycle_time_range_value(current_value: str, direction: int, display_values: L
 # VALIDATION UTILITIES
 # =============================================================================
 
-def validate_comma_separated_items(raw_input: str, is_numeric: bool = False) -> tuple[bool, List[str], str]:
+def _validate_comma_separated_items(raw_input: str, is_numeric: bool = False) -> tuple[bool, List[str], str]:
     """
     Validate comma seperated items
 
@@ -167,7 +166,7 @@ def validate_comma_separated_items(raw_input: str, is_numeric: bool = False) -> 
     
     return True, items, ""
 
-def validate_file_input(file_path: str) -> bool:
+def _validate_file_input(file_path: str) -> bool:
     """
     Validate file input
 
@@ -221,7 +220,7 @@ def log_error_message(logger, message: str) -> None:
 # QUERY ARGUMENT UTILITIES
 # =============================================================================
 
-def build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_type: str, lookback: str) -> List[str]:
+def _build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_type: str, lookback: str) -> List[str]:
     """
     Build base query arguments
 
@@ -244,7 +243,7 @@ def build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_t
         "-l", lookback
     ]
 
-def extend_arguments_for_mode(base_args: List[str], mode: str, qids: List[str] = None, eas: List[str] = None) -> List[str]:
+def _extend_arguments_for_mode(base_args: List[str], mode: str, qids: List[str] = None, eas: List[str] = None) -> List[str]:
     """
     Extend arguments for mode
 
@@ -291,7 +290,7 @@ class QueryGeneratorGUI:
         # Time ranges (keeping your exact structure)
         self.time_ranges = TIME_RANGES
         self.MODE_CONFIGS = MODE_CONFIGS
-        self.display_values = get_display_values()
+        self.display_values = _get_display_values()
 
         # Setup window
         self.root = root
@@ -369,7 +368,7 @@ class QueryGeneratorGUI:
         ttk.Label(self.frame, text="Input File:").grid(row=0, column=0, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
         self.input_entry_var = ttk.Entry(self.frame)
         self.input_entry_var.grid(row=0, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
-        ttk.Button(self.frame, text="Browse", command=self._browse_file).grid(row=0, column=2, sticky=GRID_STICKY_EAST, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        ttk.Button(self.frame, text="Browse", command=self.browse_file).grid(row=0, column=2, sticky=GRID_STICKY_EAST, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
 
         # === Mode selection ===
         ttk.Label(self.frame, text="Mode:").grid(row=1, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
@@ -419,22 +418,22 @@ class QueryGeneratorGUI:
         
         self.btn_time_prev = ttk.Button(time_frame, text="❮", style="Arrow.TButton", 
                                        padding=ARROW_BUTTON_PADDING, width=ARROW_BUTTON_WIDTH, 
-                                       command=lambda: self._change_time_range(-1))
+                                       command=lambda: self.change_time_range(-1))
         self.btn_time_prev.pack(side="left", padx=1)
         self.btn_time_next = ttk.Button(time_frame, text="❯", style="Arrow.TButton", 
                                        padding=ARROW_BUTTON_PADDING, width=ARROW_BUTTON_WIDTH, 
-                                       command=lambda: self._change_time_range(1))
+                                       command=lambda: self.change_time_range(1))
         self.btn_time_next.pack(side="right", padx=1)
 
         # === Generate query ===
-        ttk.Button(self.frame, text="Generate Query", command=self._generate_query).grid(row=7, column=0, columnspan=3, pady=10, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X)
+        ttk.Button(self.frame, text="Generate Query", command=self.generate_query).grid(row=7, column=0, columnspan=3, pady=10, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X)
 
         # === Output text ===
         self.output_text = ScrolledText(self.frame, height=self.OUTPUT_HEIGHT, wrap=tk.WORD)
         self.output_text.grid(row=8, column=0, columnspan=3, sticky=GRID_STICKY_NSEW, pady=5, padx=WIDGET_PADDING_X)
         
         # === Copy to Clipboard ===
-        ttk.Button(self.frame, text="Copy to Clipboard", command=self._copy_to_clipboard).grid(row=9, column=0, columnspan=3, pady=5, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X)
+        ttk.Button(self.frame, text="Copy to Clipboard", command=self.copy_to_clipboard).grid(row=9, column=0, columnspan=3, pady=5, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X)
         
         # === Separator ===
         separator = ttk.Separator(self.frame, orient='horizontal')
@@ -463,7 +462,7 @@ class QueryGeneratorGUI:
         self.mode_var.trace_add("write", lambda *args: self._update_mode_visibility())
         self.type_var.trace_add("write", lambda *args: self._update_hash_type_visibility())
 
-    def _browse_file(self) -> None:
+    def browse_file(self) -> None:
         """
         Browse fields
         """
@@ -477,7 +476,7 @@ class QueryGeneratorGUI:
             show_error_message("Error", f"Failed to load file: {e}")
             sys.exit(1)
 
-    def _change_time_range(self, direction: int) -> None:
+    def change_time_range(self, direction: int) -> None:
         """
         Change time range
 
@@ -485,7 +484,7 @@ class QueryGeneratorGUI:
         - direction (int): Direction to navigate (-1 for prev, 1 for next)
         """
 
-        new_value = cycle_time_range_value(self.current_lookback, direction, self.display_values)
+        new_value = _cycle_time_range_value(self.current_lookback, direction, self.display_values)
         self.lookback_var.set(new_value)
 
     # =========================================================================
@@ -500,7 +499,7 @@ class QueryGeneratorGUI:
         - bool: True if inputs are valid
         """
 
-        if not validate_file_input(self.input_entry_var.get()):
+        if not _validate_file_input(self.input_entry_var.get()):
             self._show_validation_error("Please select an input file.")
             return False
         return True
@@ -532,7 +531,7 @@ class QueryGeneratorGUI:
         - Optional[List[str]]: List of valid items or None if validation fails
         """
 
-        is_valid, items, error_msg = validate_comma_separated_items(raw_input, is_numeric)
+        is_valid, items, error_msg = _validate_comma_separated_items(raw_input, is_numeric)
         
         if not is_valid:
             self._show_validation_error(f"{label} {error_msg}")
@@ -562,7 +561,8 @@ class QueryGeneratorGUI:
         Returns:
         - List[str]: Base arguments list for query generation
         """
-        return build_base_query_arguments(
+        
+        return _build_base_query_arguments(
             self.input_entry_var.get(),
             self.current_mode,
             self.current_type,
@@ -585,13 +585,13 @@ class QueryGeneratorGUI:
             qids = self._validate_comma_separated_input(self.qid_entry.get(), "QID", is_numeric=True)
             if qids is None:
                 return None
-            return extend_arguments_for_mode(base_args, self.current_mode, qids=qids)
+            return _extend_arguments_for_mode(base_args, self.current_mode, qids=qids)
         
         elif self.current_mode == "es":
             eas = self._validate_comma_separated_input(self.ea_entry.get(), "EA")
             if eas is None:
                 return None
-            return extend_arguments_for_mode(base_args, self.current_mode, eas=eas)
+            return _extend_arguments_for_mode(base_args, self.current_mode, eas=eas)
         
         return base_args
 
@@ -621,7 +621,7 @@ class QueryGeneratorGUI:
         if exit_on_error:
             sys.exit(1)
 
-    def _generate_query(self) -> None:
+    def generate_query(self) -> None:
         """
         Generate query
         """
@@ -714,7 +714,7 @@ class QueryGeneratorGUI:
     # CLIPBOARD UTILITY METHODS
     # =========================================================================
 
-    def _copy_to_clipboard(self) -> None:
+    def copy_to_clipboard(self) -> None:
         """
         Copy to clipboard
         """

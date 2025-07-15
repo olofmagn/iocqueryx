@@ -282,12 +282,9 @@ def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=
             raise ValueError(f"Unsupported hash_type: {args.hash_type}. Must be one of: {SUPPORTED_HASH_TYPES}")
     
     # Extract items from input file
-    try:
-        items = extract_items(args.input)
-        if not items:
-            raise ValueError(f"No valid items found in input file: {args.input}")
-    except Exception as e:
-        raise ValueError(f"Failed to extract items from input file: {e}")
+    items = extract_items(args.input)
+    if not items:
+        raise ValueError(f"No valid items found in input file: {args.input}")
     
     # Normalize lookback time
     try:
@@ -355,7 +352,7 @@ def get_supported_combinations() -> Dict[str, List[str]]:
 def get_field_mapping_for_mode(mode: str) -> Dict:
     """
     Get field mappings
-    
+
     Args:
     - mode (str): Platform mode (aql, es, defender)
 
