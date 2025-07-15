@@ -25,11 +25,20 @@ class QueryGeneratorGUI:
         self.saved_qid_input = ""
         self.saved_ea_input = ""
 
-        self.INTERNAL_TIME_RANGES = ["5m", "10m", "30m", "1h", "3h", "12h", "1d"]
-        self.DISPLAY_TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
+        self.time_ranges = [
+            ("5m", "5 MINUTES"),
+            ("10m", "10 MINUTES"),
+            ("30m", "30 MINUTES"),
+            ("1h", "1 HOUR"),
+            ("3h", "3 HOURS"),
+            ("12h", "12 HOURS"),
+            ("1d", "1 DAY")
+        ]
 
-        self.internal_to_display = dict(zip(self.INTERNAL_TIME_RANGES, self.DISPLAY_TIME_RANGES))
-        self.display_to_internal = dict(zip(self.DISPLAY_TIME_RANGES, self.INTERNAL_TIME_RANGES))
+        self.internal_to_display = {internal: display for internal, display in self.time_ranges}
+        self.display_to_internal = {display: internal for internal, display in self.time_ranges}
+        self.display_values = [display for _, display in self.time_ranges]
+        self.internal_values = [internal for internal, _ in self.time_ranges]
 
         self.root = root
         self.root.title("IocQueryX - IOC Hunting Query Generator")
@@ -97,7 +106,7 @@ class QueryGeneratorGUI:
         ttk.Label(self.frame, text="Time Range:").grid(row=6, column=0, sticky="w", padx=2)
         time_frame = ttk.Frame(self.frame)
         time_frame.grid(row=6, column=1, columnspan=2, sticky="w", padx=2, pady=2)
-        self.lookback_var = tk.StringVar(value=self.DISPLAY_TIME_RANGES[1])  # default "10 MINUTES"
+        self.lookback_var = tk.StringVar(value=self.display_values[1])  # default "10 MINUTES"
         self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=15)
         self.time_entry.pack(side="left")
         
@@ -307,25 +316,15 @@ class QueryGeneratorGUI:
             self.hash_type_label.grid_remove()
 
     def _change_time_range(self, direction: int) -> None:
-        current = self.lookback_var.get().strip().upper()
+        current_display = self.lookback_var.get()
 
-        if current in self.display_to_internal:
-            internal = self.display_to_internal[current]
-
-        else:
-            internal = current.lower()
-
-            if internal in self.internal_to_display:
-                pass
-
-            else:
-                internal = self.INTERNAL_TIME_RANGES[0]
-
-        # Find index in internal list for cycling
-        idx = self.INTERNAL_TIME_RANGES.index(internal)
-        new_idx = (idx + direction) % len(self.INTERNAL_TIME_RANGES)
+        try:
+            current_idx = self.display_values.index(current_display)
+        except ValueError:
+            current_idx = 1
 
         # Update display label in entry
-        new_display = self.internal_to_display[self.INTERNAL_TIME_RANGES[new_idx]]
-        self.lookback_var.set(new_display)
+        new_idx = (current_idx + direction) % len(self.display_values)
+        self.lookback_var.set(self.display_values[new_idx])
+
 
