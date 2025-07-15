@@ -72,6 +72,27 @@ class QueryGeneratorGUI:
         self._update_mode_visibility()
         self._update_hash_type_visibility()
 
+    
+    @property
+    def current_mode(self) -> str:
+        """Cache current mode to avoid repeated StringVar.get() calls"""
+        return self.mode_var.get().lower()
+
+    @property 
+    def current_type(self) -> str:
+        """Cache current type to avoid repeated StringVar.get() calls"""
+        return self.type_var.get()
+
+    @property
+    def current_hash_type(self) -> str:
+        """Cache current hash type to avoid repeated StringVar.get() calls"""
+        return self.hash_type_var.get()
+
+    @property
+    def current_lookback(self) -> str:
+        """Cache current lookback value to avoid repeated StringVar.get() calls"""
+        return self.lookback_var.get()
+
     def _create_widgets(self) -> None:
         """
         Create all widgets
@@ -185,10 +206,8 @@ class QueryGeneratorGUI:
         """
         Generate query based on fetch elements from args
         """
-
-        args = []
         
-        # Validate required fields
+        # Validate input field
         if not self.input_entry_var.get():
             messagebox.showerror("Input missing.", " Please select an input file.")
             self.logger.error("Input missing. Please select an input file.")
@@ -197,35 +216,31 @@ class QueryGeneratorGUI:
         # Build base args
         args = [
             "-i", self.input_entry_var.get(),
-            "-m", self.mode_var.get(),
-            "-t", self.type_var.get(),
-            "-ht", self.hash_type_var.get(),
-            "-l", self.lookback_var.get()
+            "-m", self.current_mode,
+            "-t", self.current_type,
+            "-ht", self.current_hash_type,
+            "-l", self.current_lookback
         ]
 
-        lookback = self.lookback_var.get()
-        duration = normalize_lookback(lookback, self.mode_var.get())
+        duration = normalize_lookback(self.current_lookback, self.mode_var.get())
 
         if duration is None:
-            messagebox.showerror("Error", "Invalid time range")
+            self._show_validation_error("Invalid time range")
             return 0
 
-        if self.mode_var.get() == "aql":
+        # Use cached property for mode checks
+        if self.current_mode == "aql":
             qids = self._validate_comma_separated_input(self.qid_entry.get(), "QID", is_numeric=True)
-
             if qids is None:
                 return 0
-
-            if qids:  # Only extend if non-empty
+            if qids:
                 args.extend(["-q"] + qids)
         
-        elif self.mode_var.get() == "es":
+        elif self.current_mode == "es":
             eas = self._validate_comma_separated_input(self.ea_entry.get(), "EA")
-
             if eas is None:
                 return 0
-
-            if eas: # Only extend if non-empty
+            if eas:
                 args.extend(["-ea"] + eas)
 
         try:
@@ -233,10 +248,9 @@ class QueryGeneratorGUI:
             self.output_text.delete("1.0", tk.END)
             self.output_text.insert(tk.END, query)
         except ValueError as e:
-            messagebox.showerror("Input Error", str(e))
+            self._show_validation_error(str(e))
         except Exception as e:
-            messagebox.showerror("Error", str(e))
-            sys.exit(1)
+            self._show_validation_error(str(e))
 
     def _validate_comma_separated_input(self, raw_input: str, label: str, is_numeric: bool = False) -> Optional[List[str]]:
         """
@@ -245,7 +259,6 @@ class QueryGeneratorGUI:
         if not raw_input.strip():
             return []
         
-        # Single pass: split, strip, and filter empty items
         items = [item.strip() for item in raw_input.split(",") if item.strip()]
         
         if not items:
@@ -282,7 +295,7 @@ class QueryGeneratorGUI:
             self.logger.info("Query copied to clipboard")
 
     def _update_mode_visibility(self) -> None:
-        mode = self.mode_var.get().lower()
+        mode = self.current_mode
         config = self.MODE_CONFIGS.get(mode, self.MODE_CONFIGS["aql"])
         
         # Update labels
@@ -320,7 +333,7 @@ class QueryGeneratorGUI:
         Show or hide the hash type selector depending on the selected type.
         """
 
-        is_hash_type = self.type_var.get() == "hash"
+        is_hash_type = self.current_type == "hash"
         self.hash_type_label.config(text="Hash Type:")
 
         if is_hash_type:
