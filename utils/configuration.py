@@ -103,7 +103,8 @@ def create_parser() -> argparse.ArgumentParser:
 
     parser.add_argument("-l", "--lookback",
                         type=str,
-                        help="Time lookback window for search (e.g., '24h', '7d')"
+                        required=True,
+                        help="Time lookback window for search (e.g., '24h', '7d')",
                         )
 
     parser.add_argument("-t", "--type",
