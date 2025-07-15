@@ -239,25 +239,34 @@ class QueryGeneratorGUI:
             sys.exit(1)
 
     def _validate_comma_separated_input(self, raw_input: str, label: str, is_numeric: bool = False) -> Optional[List[str]]:
-        stripped_input = raw_input.strip()
-
-        if not stripped_input:
-            return []  
-
-        items = [item.strip() for item in stripped_input.split(",")]
-
-        for item in items:
-            if not item:
-                messagebox.showerror("Invalid input", f"{label} contains an empty entry.")
-                self.logger.error(f"{label} contains an empty entry.")
+        """
+        Validate comma-separated input with single-pass processing
+        """
+        if not raw_input.strip():
+            return []
+        
+        # Single pass: split, strip, and filter empty items
+        items = [item.strip() for item in raw_input.split(",") if item.strip()]
+        
+        if not items:
+            self._show_validation_error(f"{label} contains no valid entries.")
+            return None
+        
+        # Validate numeric values in single pass if needed
+        if is_numeric:
+            invalid_items = [item for item in items if not item.isdigit()]
+            if invalid_items:
+                # Show ALL invalid items at once, not just the first one
+                invalid_list = "', '".join(invalid_items)
+                self._show_validation_error(f"{label} contains invalid integers: '{invalid_list}'")
                 return None
-
-            if is_numeric and not item.isdigit():
-                messagebox.showerror("Invalid input", f"{label} '{item}' must be an valid integer.")
-                self.logger.error(f"Invalid {label} - '{item}' must be an integer.")
-                return None
-
+        
         return items
+    
+    def _show_validation_error(self, message: str) -> None:
+        """Helper method to centralize validation error handling"""
+        messagebox.showerror("Invalid input", message)
+        self.logger.error(message)
 
     def _copy_to_clipboard(self) -> None:
         """
