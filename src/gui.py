@@ -35,10 +35,7 @@ class QueryGeneratorGUI:
             ("1d", "1 DAY")
         ]
 
-        self.internal_to_display = {internal: display for internal, display in self.time_ranges}
-        self.display_to_internal = {display: internal for internal, display in self.time_ranges}
         self.display_values = [display for _, display in self.time_ranges]
-        self.internal_values = [internal for internal, _ in self.time_ranges]
 
         self.root = root
         self.root.title("IocQueryX - IOC Hunting Query Generator")
