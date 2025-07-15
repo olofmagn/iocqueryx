@@ -35,6 +35,28 @@ class QueryGeneratorGUI:
             ("1d", "1 DAY")
         ]
 
+        # Add this after your time_ranges setup:
+        self.MODE_CONFIGS = {
+            "aql": {
+                "info": "Using AQL Search query mode",
+                "label": "QID:",
+                "show_qid": True,
+                "show_ea": False
+            },
+            "es": {
+                "info": "Using Elastic Search query mode", 
+                "label": "EA:",
+                "show_qid": False,
+                "show_ea": True
+            },
+            "defender": {
+                "info": "Using Defender Search query mode",
+                "label": "",
+                "show_qid": False,
+                "show_ea": False
+            }
+        }
+
         self.display_values = [display for _, display in self.time_ranges]
 
         self.root = root
@@ -252,50 +274,37 @@ class QueryGeneratorGUI:
 
     def _update_mode_visibility(self) -> None:
         mode = self.mode_var.get().lower()
-
-        # Update label/info if needed
-        visibility_map = {
-            "aql": {
-                "info": "Using AQL Search query mode"
-            },
-            "es": {
-                "info": "Using Elastic Search query mode"
-            },
-            "defender": {
-                "info": "Using Defender Search query mode"
-            }
-        }
-
-        if mode in visibility_map:
-            self.platform_info_label.config(text=visibility_map[mode]["info"])
-
-        # Handle toggle menu + entries visibility with defender
-
-        if mode == "aql":
-            self.saved_ea_input = self.ea_entry.get()
-
-            self.input_label.config(text="QID:")
-            self.qid_entry.grid()
-            self.qid_entry.delete(0, tk.END)
-            self.qid_entry.insert(0, self.saved_qid_input)
-
-            self.ea_entry.grid_remove()
-
-        elif mode == "es":
-            self.saved_qid_input = self.qid_entry.get()
-
-            self.input_label.config(text="EA:")
-            self.ea_entry.grid()
-            self.ea_entry.delete(0, tk.END)
-            self.ea_entry.insert(0, self.saved_ea_input)
-
-            self.qid_entry.grid_remove()
+        config = self.MODE_CONFIGS.get(mode, self.MODE_CONFIGS["aql"])
         
-        elif mode == "defender":
-            self.qid_entry.grid_remove()
-            self.ea_entry.grid_remove()
-
-            self.input_label.config(text="")
+        # Update labels
+        self.platform_info_label.config(text=config["info"])
+        self.input_label.config(text=config["label"])
+        
+        # Handle QID entry widget
+        if config["show_qid"]:
+            if not self.qid_entry.winfo_viewable():  # Only show if hidden
+                self.saved_ea_input = self.ea_entry.get()
+                self.qid_entry.delete(0, tk.END)
+                self.qid_entry.insert(0, self.saved_qid_input)
+                self.qid_entry.grid()
+            if self.ea_entry.winfo_viewable():  # Hide EA if visible
+                self.ea_entry.grid_remove()
+        else:
+            if self.qid_entry.winfo_viewable():  # Only hide if visible
+                self.qid_entry.grid_remove()
+        
+        # Handle EA entry widget  
+        if config["show_ea"]:
+            if not self.ea_entry.winfo_viewable():  # Only show if hidden
+                self.saved_qid_input = self.qid_entry.get()
+                self.ea_entry.delete(0, tk.END)
+                self.ea_entry.insert(0, self.saved_ea_input)
+                self.ea_entry.grid()
+            if self.qid_entry.winfo_viewable():  # Hide QID if visible
+                self.qid_entry.grid_remove()
+        else:
+            if self.ea_entry.winfo_viewable():  # Only hide if visible
+                self.ea_entry.grid_remove()
 
     def _update_hash_type_visibility(self) -> None:
         """
