@@ -53,7 +53,7 @@ FIRST_COLUMN_INDEX = 0
 
 def get_logger(name: str = DEFAULT_LOGGER_NAME, level: int = DEFAULT_LOG_LEVEL) -> logging.Logger:
     """
-    get_logger utility.
+    get_logger utility
 
     Args:
     - name (str): Logger name (default: IocQueryx)
@@ -75,7 +75,7 @@ def get_logger(name: str = DEFAULT_LOGGER_NAME, level: int = DEFAULT_LOG_LEVEL) 
 
 def create_module_logger() -> logging.Logger:
     """
-    Create module logger.
+    Create module logger
     """
 
     return get_logger()
@@ -89,7 +89,7 @@ logger = create_module_logger()
 
 def validate_file_path(file_path: str) -> bool:
     """
-    Validate file path.
+    Validate file path
     
     Args:
     - file_path (str): Path to validate
@@ -100,7 +100,7 @@ def validate_file_path(file_path: str) -> bool:
 
 def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[str]:
     """
-    Read file lines.
+    Read file lines
 
     Args:
     - file_path (str): Path to the file to read
@@ -119,6 +119,8 @@ def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[st
 
 def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
     """
+    Extract first column 
+
     Args:
     - line (str): Line to process
     - delimiter (str): Column delimiter (default: comma)
@@ -129,7 +131,7 @@ def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
 
 def extract_items(input_file: str) -> List[str]:
     """
-    Extract items.
+    Extract items
 
     Args:
     - input_file (str): Path to the input file containing a list of items
@@ -151,7 +153,7 @@ def extract_items(input_file: str) -> List[str]:
 
 def format_condition_value(value, wrap_values: bool = False, quote_char: str = "'") -> str:
     """
-    Format condition value.
+    Format condition value
 
     Args:
     - value: Value to format
@@ -166,6 +168,8 @@ def format_condition_value(value, wrap_values: bool = False, quote_char: str = "
 
 def create_single_condition(field: str, value, comparator: str = "=", wrap_values: bool = False, quote_char: str = "'") -> str:
     """
+    Create single condition
+
     Args:
     - field (str): Field name
     - value: Value to compare
@@ -182,7 +186,7 @@ def create_single_condition(field: str, value, comparator: str = "=", wrap_value
 
 def build_conditions(field: str, values: list, operator: str = "AND", wrap_values: bool = False, quote_char: str = "'", comparator: str = "=") -> str:
     """
-    Build conditions.
+    Build conditions
 
     Args:
     - field (str): The field name to filter on
@@ -211,7 +215,7 @@ def build_conditions(field: str, values: list, operator: str = "AND", wrap_value
 
 def validate_time_value(value: int) -> bool:
     """
-    Validate time value.
+    Validate time value
 
     Args:
     - value (int): Time value to validate
@@ -224,6 +228,8 @@ def validate_time_value(value: int) -> bool:
 
 def normalize_time_unit(unit: str) -> Optional[str]:
     """
+    Normalize time unit
+
     Args:
     - unit (str): Time unit string to normalize
 
@@ -241,7 +247,7 @@ def normalize_time_unit(unit: str) -> Optional[str]:
 
 def parse_lookback_string(lookback: str) -> Optional[tuple[int, str]]:
     """
-    Parse lookback string.
+    Parse lookback string
 
     Args:
     - lookback (str): Lookback string to parse (e.g., "24h", "7d")
@@ -274,7 +280,7 @@ def parse_lookback_string(lookback: str) -> Optional[tuple[int, str]]:
 
 def format_time_for_platform(value: int, unit: str, mode: str) -> str:
     """
-    Format time for platform.
+    Format time for platform
 
     Args:
     - value (int): Time value
@@ -301,7 +307,7 @@ def format_time_for_platform(value: int, unit: str, mode: str) -> str:
 
 def normalize_lookback(lookback: str, mode: str) -> Optional[str]:
     """
-    Normalize lookback.
+    Normalize lookback
 
     Args:
     - lookback (str): The string value to transform to correct format
@@ -364,7 +370,7 @@ def add_required_arguments(parser: argparse.ArgumentParser) -> None:
 
 def add_optional_arguments(parser: argparse.ArgumentParser) -> None:
     """
-    Add optional arguments.
+    Add optional arguments
     """
 
     parser.add_argument("-ht", "--hash_type",
@@ -389,7 +395,7 @@ def add_optional_arguments(parser: argparse.ArgumentParser) -> None:
 
 def create_parser() -> argparse.ArgumentParser:
     """
-    Create parser logic.
+    Create parser logic
     """
 
     parser = create_base_parser()
@@ -403,7 +409,7 @@ def create_parser() -> argparse.ArgumentParser:
 
 def validate_mode(mode: str) -> bool:
     """
-    Validate mode.
+    Validate mode
 
     Args:
     - mode (str): Mode to validate
@@ -416,6 +422,8 @@ def validate_mode(mode: str) -> bool:
 
 def validate_type(item_type: str) -> bool:
     """
+    Validate type
+
     Args:
     - item_type (str): Type to validate
 
@@ -427,9 +435,11 @@ def validate_type(item_type: str) -> bool:
 
 def validate_hash_type(hash_type: str) -> bool:
     """
+    Validate hash type
+
     Args:
     - hash_type (str): Hash type to validate
-    
+
     Returns:
     - bool: True if hash type is supported
     """
@@ -438,6 +448,8 @@ def validate_hash_type(hash_type: str) -> bool:
 
 def validate_configuration_parameters(mode: str, item_type: str, hash_type: str = None) -> tuple[bool, str]:
     """
+    Validate configuration parameters
+    
     Args:
     - mode (str): Mode to validate
     - item_type (str): Type to validate

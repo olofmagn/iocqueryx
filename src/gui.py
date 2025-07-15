@@ -98,7 +98,7 @@ COPYRIGHT_COLOR = "gray50"
 
 def get_display_values() -> List[str]:
     """
-    Get display values.
+    Get display values
 
     Returns:
     - List[str]: List of display values for time ranges
@@ -108,7 +108,7 @@ def get_display_values() -> List[str]:
 
 def get_default_time_display() -> str:
     """
-    Get default time range display value.
+    Get default time range display value
 
     Returns:
     - str: Default time range display value
@@ -118,7 +118,7 @@ def get_default_time_display() -> str:
 
 def cycle_time_range_value(current_value: str, direction: int, display_values: List[str]) -> str:
     """
-    Cycle time range value.
+    Cycle time range value
 
     Args:
     - current_value (str): Current time range value
@@ -142,7 +142,7 @@ def cycle_time_range_value(current_value: str, direction: int, display_values: L
 
 def validate_comma_separated_items(raw_input: str, is_numeric: bool = False) -> tuple[bool, List[str], str]:
     """
-    Validate comma seperated items.
+    Validate comma seperated items
 
     Args:
     - raw_input (str): Raw comma-separated input
@@ -169,10 +169,11 @@ def validate_comma_separated_items(raw_input: str, is_numeric: bool = False) -> 
 
 def validate_file_input(file_path: str) -> bool:
     """
-    Validate file input.
+    Validate file input
 
     Args:
     - file_path (str): File path to validate
+
     Returns:
     - bool: True if valid file path
     """
@@ -185,7 +186,7 @@ def validate_file_input(file_path: str) -> bool:
 
 def show_error_message(title: str, message: str) -> None:
     """
-    Show error messages.
+    Show error messages
 
     Args:
     - title (str): Error dialog title
@@ -196,7 +197,7 @@ def show_error_message(title: str, message: str) -> None:
 
 def show_info_message(title: str, message: str) -> None:
     """
-    Show info message.
+    Show info message
 
     Args:
     - title (str): Info dialog title
@@ -207,7 +208,7 @@ def show_info_message(title: str, message: str) -> None:
 
 def log_error_message(logger, message: str) -> None:
     """
-    Show log error message.
+    Show log error message
 
     Args:
     - logger: Logger instance
@@ -222,7 +223,7 @@ def log_error_message(logger, message: str) -> None:
 
 def build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_type: str, lookback: str) -> List[str]:
     """
-    Build base query arguments.
+    Build base query arguments
 
     Args:
     - input_file (str): Input file path
@@ -230,6 +231,7 @@ def build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_t
     - type_val (str): Query type
     - hash_type (str): Hash type
     - lookback (str): Lookback time
+
     Returns:
     - List[str]: Base arguments list
     """
@@ -244,13 +246,14 @@ def build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_t
 
 def extend_arguments_for_mode(base_args: List[str], mode: str, qids: List[str] = None, eas: List[str] = None) -> List[str]:
     """
-    Extend arguments for mode.
+    Extend arguments for mode
 
     Args:
     - base_args (List[str]): Base arguments
     - mode (str): Query mode
     - qids (List[str]): QID values for AQL mode
     - eas (List[str]): EA values for ES mode
+
     Returns:
     - List[str]: Extended arguments
     """
@@ -312,7 +315,7 @@ class QueryGeneratorGUI:
     @property
     def current_mode(self) -> str:
         """
-        Current mode.
+        Current mode
 
         Returns:
         - str: Current mode in lowercase
@@ -323,7 +326,7 @@ class QueryGeneratorGUI:
     @property 
     def current_type(self) -> str:
         """
-        Current type.
+        Current type
 
         Returns:
         - str: Current type selection
@@ -334,7 +337,7 @@ class QueryGeneratorGUI:
     @property
     def current_hash_type(self) -> str:
         """
-        Current hash hash type.
+        Current hash hash type
 
         Returns:
         - str: Current hash type selection
@@ -345,7 +348,7 @@ class QueryGeneratorGUI:
     @property
     def current_lookback(self) -> str:
         """
-        Current lookback.
+        Current lookback
 
         Returns:
         - str: Current lookback value
@@ -359,7 +362,7 @@ class QueryGeneratorGUI:
 
     def _create_widgets(self) -> None:
         """
-        Create widgets.
+        Create widgets
         """
 
         # === Input file ===
@@ -454,7 +457,7 @@ class QueryGeneratorGUI:
 
     def _setup_trace_callbacks(self) -> None:
         """
-        Setup trace callbacks.
+        Setup trace callbacks
         """
 
         self.mode_var.trace_add("write", lambda *args: self._update_mode_visibility())
@@ -462,7 +465,7 @@ class QueryGeneratorGUI:
 
     def _browse_file(self) -> None:
         """
-        Browse fields.
+        Browse fields
         """
 
         try:
@@ -476,7 +479,7 @@ class QueryGeneratorGUI:
 
     def _change_time_range(self, direction: int) -> None:
         """
-        Change time range.
+        Change time range
 
         Args:
         - direction (int): Direction to navigate (-1 for prev, 1 for next)
@@ -491,11 +494,12 @@ class QueryGeneratorGUI:
 
     def _validate_inputs(self) -> bool:
         """
-        Validate inputs.
+        Validate inputs
 
         Returns:
         - bool: True if inputs are valid
         """
+
         if not validate_file_input(self.input_entry_var.get()):
             self._show_validation_error("Please select an input file.")
             return False
@@ -503,7 +507,7 @@ class QueryGeneratorGUI:
 
     def _validate_time_range(self) -> bool:
         """
-        Validate time range.
+        Validate time range
 
         Returns:
         - bool: True if time range is valid
@@ -517,7 +521,7 @@ class QueryGeneratorGUI:
 
     def _validate_comma_separated_input(self, raw_input: str, label: str, is_numeric: bool = False) -> Optional[List[str]]:
         """
-        Validate comma seperated input.
+        Validate comma seperated input
 
         Args:
         - raw_input (str): Comma-separated input string to validate
@@ -538,7 +542,7 @@ class QueryGeneratorGUI:
 
     def _show_validation_error(self, message: str) -> None:
         """
-        Show validation error.
+        Show validation error
 
         Args:
         - message (str): Error message to display and log
@@ -553,7 +557,7 @@ class QueryGeneratorGUI:
 
     def _build_base_args(self) -> List[str]:
         """
-        Build base args.
+        Build base args
 
         Returns:
         - List[str]: Base arguments list for query generation
@@ -568,7 +572,7 @@ class QueryGeneratorGUI:
 
     def _build_mode_specific_args(self, base_args: List[str]) -> Optional[List[str]]:
         """
-        Build mode specific args.
+        Build mode specific args
 
         Args:
         - base_args (List[str]): Base arguments to extend with mode-specific parameters
@@ -593,7 +597,8 @@ class QueryGeneratorGUI:
 
     def _display_query(self, query: str) -> None:
         """
-        Display query.
+        Display query
+    
         Args:
         - query (str): The generated query string to display
         """
@@ -603,7 +608,7 @@ class QueryGeneratorGUI:
 
     def _handle_error(self, title: str, message: str, exit_on_error: bool = False) -> None:
         """
-        Handle errors.
+        Handle errors
 
         Args:
         - title (str): Error dialog title
@@ -655,7 +660,7 @@ class QueryGeneratorGUI:
 
     def _update_mode_visibility(self) -> None:
         """
-        Update mode visibility.
+        Update mode visibility
         """
 
         mode = self.current_mode
@@ -693,7 +698,7 @@ class QueryGeneratorGUI:
 
     def _update_hash_type_visibility(self) -> None:
         """
-        Update hash visibility.
+        Update hash visibility
         """
 
         is_hash_type = self.current_type == "hash"
@@ -713,7 +718,7 @@ class QueryGeneratorGUI:
         """
         Copy to clipboard
         """
-        
+
         text = self.output_text.get("1.0", tk.END).strip()
         if text:
             self.root.clipboard_clear()

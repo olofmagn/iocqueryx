@@ -1,5 +1,5 @@
 """
-A simple program that generates a search query based on a given list.
+A simple program that generates a search query based on a given list
 
 Author: Olof Magnusson
 Date: 2025-07-02
@@ -73,7 +73,7 @@ DEFENDER_CONFIG = {
 
 def get_aql_field(item_type: str, hash_type: str = "sha256") -> str:
     """
-    Get AQL field.
+    Get AQL field
 
     Args:
     - item_type (str): Type of item (ip, domain, hash)
@@ -95,7 +95,7 @@ def get_aql_field(item_type: str, hash_type: str = "sha256") -> str:
 
 def get_elastic_field(item_type: str, hash_type: str = "sha256") -> str:
     """
-    Get Elastic field.
+    Get Elastic field
 
     Args:
     - item_type (str): Type of item (ip, domain, hash)
@@ -117,7 +117,7 @@ def get_elastic_field(item_type: str, hash_type: str = "sha256") -> str:
 
 def get_defender_config(item_type: str, hash_type: str = "sha256") -> Dict[str, str]:
     """
-    Get Defender config.
+    Get Defender config
 
     Args:
     - item_type (str): Type of item (ip, domain, hash)
@@ -146,7 +146,7 @@ def get_defender_config(item_type: str, hash_type: str = "sha256") -> Dict[str, 
 
 def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int]] = None, hash_type: str = "sha256", lookback: str = None) -> str:
     """
-    Generate AQL query.
+    Generate AQL query
 
     Args:
     - items (List[str]): A list of items, e.g., ip, domains or hashes.
@@ -154,8 +154,9 @@ def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int
     - qids (Optional[List[int]]): Optional QID numbers for filtering.
     - hash_type (str): Hash type for hash queries (default: sha256).
     - lookback (str): Time range for the query.
+
     Returns:
-    - str: AQL query string.
+    - str: AQL query string
     """
 
     qids = qids or []
@@ -176,17 +177,17 @@ def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int
 
 def generate_elastic_query(items: List[str], item_type: str, event_actions: Optional[List[str]] = None, hash_type: str = "sha256", lookback: str = None) -> str:
     """
-    Generate elastic query.
+    Generate elastic query
 
     Args:
-    - items (List[str]): A list of items.
-    - item_type (str): The type of item - must be one of 'ip', 'domain' or 'hash'.
-    - event_actions (Optional[List[str]]): Type of events to filter on (qid number equivalent).
-    - hash_type (str): Hash type for hash queries (default: sha256).
-    - lookback (str): Time range for the query.
+    - items (List[str]): A list of items
+    - item_type (str): The type of item - must be one of 'ip', 'domain' or 'hash'
+    - event_actions (Optional[List[str]]): Type of events to filter on (qid number equivalent)
+    - hash_type (str): Hash type for hash queries (default: sha256)
+    - lookback (str): Time range for the query
 
     Returns:
-    - str: Elastic Query string.
+    - str: Elastic Query string
     """
 
     event_actions = event_actions or []
@@ -206,13 +207,13 @@ def generate_elastic_query(items: List[str], item_type: str, event_actions: Opti
 
 def generate_defender_query(items: List[str], item_type: str, hash_type: str = "sha256", lookback: str = None) -> str:
     """
-    Generate defender query.
+    Generate defender query
 
     Args:
     - items (List[str]): A list of items e.g., ip, domains, or hashes
     - item_type (str): 'ip', 'domain' or 'hash' to generate queries
-    - hash_type (str): Hash type for hash queries (default: sha256).
-    - lookback (str): Time range for the query.
+    - hash_type (str): Hash type for hash queries (default: sha256)
+    - lookback (str): Time range for the query
     
     Returns:
     - str: Defender Query string
@@ -233,14 +234,14 @@ def generate_defender_query(items: List[str], item_type: str, hash_type: str = "
 
 def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=None) -> str:
     """
-    Generate query from args.
-    
+    Generate query from args
+
     Args:
     - args (Union[List[str], argparse.Namespace]): List of CLI-style arguments or parsed Namespace object
     - parser (Optional[ArgumentParser]): Parser instance to use if args is a list
 
     Returns:
-    - str: The generated query string tailored to the chosen platform and input type.
+    - str: The generated query string tailored to the chosen platform and input type
     """
 
     if parser is None:
@@ -320,6 +321,8 @@ def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=
 
 def validate_query_parameters(item_type: str, mode: str, hash_type: str = "sha256") -> None:
     """
+    Validate query parameters
+
     Args:
     - item_type (str): Type of item to validate
     - mode (str): Platform mode to validate
@@ -338,6 +341,9 @@ def validate_query_parameters(item_type: str, mode: str, hash_type: str = "sha25
 def get_supported_combinations() -> Dict[str, List[str]]:
     """
     Get supported combinations
+
+    Returns:
+    - Dict[str, List[str]]: Dictionary of all supported configuration combinations
     """
 
     return {
@@ -348,6 +354,8 @@ def get_supported_combinations() -> Dict[str, List[str]]:
 
 def get_field_mapping_for_mode(mode: str) -> Dict:
     """
+    Get field mappings
+    
     Args:
     - mode (str): Platform mode (aql, es, defender)
 
