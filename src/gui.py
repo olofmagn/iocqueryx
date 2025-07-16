@@ -8,7 +8,7 @@ Date: 2025-07-02
 import tkinter as tk
 import sys
 
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from tkinter import ttk, filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
@@ -86,6 +86,17 @@ SUPPORTED_MODES = ["aql", "es", "defender"]
 SUPPORTED_TYPES = ["ip", "domain", "hash"]
 SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256", "filehash"]
 
+## Hash Type Configuration
+STANDARD_HASH_TYPES = ["md5", "sha1", "sha256"]
+AQL_HASH_TYPES = STANDARD_HASH_TYPES + ["filehash"]
+
+# Platform-Specific Hash Types
+PLATFORM_HASH_TYPES = {
+    "aql": AQL_HASH_TYPES,
+    "es": STANDARD_HASH_TYPES,
+    "defender": STANDARD_HASH_TYPES
+}
+
 # UI Text Constants
 COPYRIGHT_TEXT = "© 2025 olofmagn"
 COPYRIGHT_FONT = ("Segoe UI", 8, "italic")
@@ -95,7 +106,7 @@ COPYRIGHT_COLOR = "gray50"
 # TIME RANGE UTILITIES
 # =============================================================================
 
-def _get_display_values() -> List[str]:
+def get_display_values() -> List[str]:
     """
     Get display values
 
@@ -105,7 +116,7 @@ def _get_display_values() -> List[str]:
 
     return [display for _, display in TIME_RANGES]
 
-def _get_default_time_display() -> str:
+def get_default_time_display() -> str:
     """
     Get default time range display value
 
@@ -113,9 +124,9 @@ def _get_default_time_display() -> str:
     - str: Default time range display value
     """
 
-    return _get_display_values()[DEFAULT_TIME_RANGE_INDEX]
+    return get_display_values()[DEFAULT_TIME_RANGE_INDEX]
 
-def _cycle_time_range_value(current_value: str, direction: int, display_values: List[str]) -> str:
+def cycle_time_range_value(current_value: str, direction: int, display_values: List[str]) -> str:
     """
     Cycle time range value
 
@@ -123,6 +134,7 @@ def _cycle_time_range_value(current_value: str, direction: int, display_values: 
     - current_value (str): Current time range value
     - direction (int): Direction to cycle (-1 or 1)
     - display_values (List[str]): Available display values
+
     Returns:
     - str: New time range value
     """
@@ -133,13 +145,14 @@ def _cycle_time_range_value(current_value: str, direction: int, display_values: 
         current_idx = DEFAULT_TIME_RANGE_INDEX
 
     new_idx = (current_idx + direction) % len(display_values)
+
     return display_values[new_idx]
 
 # =============================================================================
 # VALIDATION UTILITIES
 # =============================================================================
 
-def _validate_comma_separated_items(raw_input: str, is_numeric: bool = False) -> tuple[bool, List[str], str]:
+def validate_comma_separated_items(raw_input: str, is_numeric: bool = False) -> Tuple[bool, List[str], str]:
     """
     Validate comma seperated items
 
@@ -148,7 +161,7 @@ def _validate_comma_separated_items(raw_input: str, is_numeric: bool = False) ->
     - is_numeric (bool): Whether items should be numeric
     
     Returns:
-    - tuple[bool, List[str], str]: (is_valid, items, error_message)
+    - Tuple[bool, List[str], str]: (is_valid, items, error_message)
     """
 
     if not raw_input.strip():
@@ -167,7 +180,7 @@ def _validate_comma_separated_items(raw_input: str, is_numeric: bool = False) ->
     
     return True, items, ""
 
-def _validate_file_input(file_path: str) -> bool:
+def validate_file_input(file_path: str) -> bool:
     """
     Validate file input
 
@@ -221,7 +234,7 @@ def log_error_message(logger, message: str) -> None:
 # QUERY ARGUMENT UTILITIES
 # =============================================================================
 
-def _build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_type: str, lookback: str) -> List[str]:
+def build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_type: str, lookback: str) -> List[str]:
     """
     Build base query arguments
 
@@ -244,7 +257,7 @@ def _build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_
         "-l", lookback
     ]
 
-def _extend_arguments_for_mode(base_args: List[str], mode: str, qids: List[str] = None, eas: List[str] = None) -> List[str]:
+def extend_arguments_for_mode(base_args: List[str], mode: str, qids: List[str] = None, eas: List[str] = None) -> List[str]:
     """
     Extend arguments for mode
 
@@ -267,6 +280,40 @@ def _extend_arguments_for_mode(base_args: List[str], mode: str, qids: List[str] 
     
     return args
 
+
+# =============================================================================
+# HASH TYPE UTILITIES
+# =============================================================================
+
+def get_supported_hash_types(mode: str) -> List[str]:
+    """
+    Get supported hash types for a specific mode.
+    
+    Args:
+    - mode (str): Query mode (e.g., 'aql', 'es', 'defender')
+    
+    Returns:
+    - List[str]: List of supported hash types for the mode
+    """
+
+    return PLATFORM_HASH_TYPES.get(mode.lower(), SUPPORTED_HASH_TYPES)
+
+def get_default_hash_type(mode: str) -> str:
+    """
+    Get default hash type for a specific mode.
+    
+    Args:
+    - mode (str): Query mode
+    
+    Returns:
+    - str: Default hash type for the mode
+    """
+
+    supported_types = get_supported_hash_types(mode)
+    
+    return supported_types[0] if supported_types else DEFAULT_HASH_TYPE
+
+
 # =============================================================================
 # MAIN GUI CLASS
 # =============================================================================
@@ -283,20 +330,20 @@ class QueryGeneratorGUI:
         self.saved_qid_input = ""
         self.saved_ea_input = ""
         
-        # Window size constants (keeping your exact values)
+        # Window size constants 
         self.MAX_WIDTH = DEFAULT_WINDOW_WIDTH
         self.MAX_HEIGHT = DEFAULT_WINDOW_HEIGHT
         self.OUTPUT_HEIGHT = DEFAULT_OUTPUT_HEIGHT
 
-        # Time ranges (keeping your exact structure)
+        # Time ranges 
         self.time_ranges = TIME_RANGES
         self.MODE_CONFIGS = MODE_CONFIGS
-        self.display_values = _get_display_values()
+        self.display_values = get_display_values()
 
         # Setup window
         self.root = root
         self.root.title(WINDOW_TITLE)
-        self.root.minsize(self.MAX_HEIGHT, self.MAX_WIDTH)  # Keeping your exact order
+        self.root.minsize(self.MAX_HEIGHT, self.MAX_WIDTH)
         self.root.resizable(False, False)
 
         self.frame = ttk.Frame(root, padding=WINDOW_PADDING)
@@ -485,7 +532,7 @@ class QueryGeneratorGUI:
         - direction (int): Direction to navigate (-1 for prev, 1 for next)
         """
 
-        new_value = _cycle_time_range_value(self.current_lookback, direction, self.display_values)
+        new_value = cycle_time_range_value(self.current_lookback, direction, self.display_values)
         self.lookback_var.set(new_value)
 
     # =========================================================================
@@ -500,7 +547,7 @@ class QueryGeneratorGUI:
         - bool: True if inputs are valid
         """
 
-        if not _validate_file_input(self.input_entry_var.get()):
+        if not validate_file_input(self.input_entry_var.get()):
             self._show_validation_error("Please select an input file.")
             return False
         return True
@@ -532,7 +579,7 @@ class QueryGeneratorGUI:
         - Optional[List[str]]: List of valid items or None if validation fails
         """
 
-        is_valid, items, error_msg = _validate_comma_separated_items(raw_input, is_numeric)
+        is_valid, items, error_msg = validate_comma_separated_items(raw_input, is_numeric)
         
         if not is_valid:
             self._show_validation_error(f"{label} {error_msg}")
@@ -563,7 +610,7 @@ class QueryGeneratorGUI:
         - List[str]: Base arguments list for query generation
         """
         
-        return _build_base_query_arguments(
+        return build_base_query_arguments(
             self.input_entry_var.get(),
             self.current_mode,
             self.current_type,
@@ -586,13 +633,13 @@ class QueryGeneratorGUI:
             qids = self._validate_comma_separated_input(self.qid_entry.get(), "QID", is_numeric=True)
             if qids is None:
                 return None
-            return _extend_arguments_for_mode(base_args, self.current_mode, qids=qids)
+            return extend_arguments_for_mode(base_args, self.current_mode, qids=qids)
         
         elif self.current_mode == "es":
             eas = self._validate_comma_separated_input(self.ea_entry.get(), "EA")
             if eas is None:
                 return None
-            return _extend_arguments_for_mode(base_args, self.current_mode, eas=eas)
+            return extend_arguments_for_mode(base_args, self.current_mode, eas=eas)
         
         return base_args
 
@@ -670,6 +717,8 @@ class QueryGeneratorGUI:
         # Update labels
         self.platform_info_label.config(text=config["info"])
         self.input_label.config(text=config["label"])
+
+        self._update_hash_types_for_mode(mode)
         
         # Handle QID entry widget
         if config["show_qid"]:
@@ -710,6 +759,56 @@ class QueryGeneratorGUI:
         else:
             self.hash_type_combobox.grid_remove()
             self.hash_type_label.grid_remove()
+
+    def get_supported_hash_types(self, mode: str) -> List[str]:
+        """
+        Get supported hash types for a specific mode.
+
+        Args:
+        - mode (str): Query mode (e.g., 'aql', 'es', 'defender')
+
+        Returns:
+        - List[str]: List of supported hash types for the mode
+        """
+
+        return PLATFORM_HASH_TYPES.get(mode.lower(), SUPPORTED_HASH_TYPES)
+
+    def get_default_hash_type(self, mode: str) -> str:
+        """
+        Get default hash type for a specific mode.
+
+        Args:
+        - mode (str): Query mode
+
+        Returns:
+        - str: Default hash type for the mode
+
+        """
+        supported_types = get_supported_hash_types(mode)
+
+        return supported_types[0] if supported_types else DEFAULT_HASH_TYPE
+
+    def _update_hash_types_for_mode(self, mode: str) -> None:
+        """
+        Update hash type combobox based on selected mode.
+
+        Args:
+        - mode (str): Current mode selection
+        """
+
+        # Get supported hash types for this mode
+        supported_types = get_supported_hash_types(mode)
+        self.hash_type_combobox['values'] = supported_types
+
+        # Set default hash type if current selection is not supported
+        current_hash_type = self.current_hash_type
+        if current_hash_type not in supported_types:
+            default_type = get_default_hash_type(mode)
+            self.hash_type_var.set(default_type)
+
+        # If current type is still valid
+        elif current_hash_type in supported_types:
+            self.hash_type_var.set(current_hash_type)
 
     # =========================================================================
     # CLIPBOARD UTILITY METHODS

@@ -233,7 +233,7 @@ def generate_defender_query(items: List[str], item_type: str, hash_type: str = "
 # MAIN QUERY GENERATION ORCHESTRATOR
 # =============================================================================
 
-def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=None) -> str:
+def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser = None) -> str:
     """
     Generate query from args
 
@@ -310,6 +310,7 @@ def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=
                 return generate_defender_query(items, args.type, args.hash_type, lookback=lookback)
             case _:
                 raise ValueError(f"Unsupported mode: {args.mode}. Supported modes: {SUPPORTED_MODES}")    
+
     except Exception as e:
         raise ValueError(f"Failed to generate {args.mode} query: {e}")
 
@@ -360,13 +361,17 @@ def get_field_mapping_for_mode(mode: str) -> Dict:
     Returns:
     - Dict: Field mapping configuration for the specified mode
     """
-
-    mode = mode.lower()
-    if mode == "aql":
-        return AQL_FIELDS
-    elif mode == "es":
-        return ELASTIC_FIELDS
-    elif mode == "defender":
-        return DEFENDER_CONFIG
-    else:
-        raise ValueError(f"Unsupported mode: {mode}. Must be one of: {SUPPORTED_MODES}")
+    
+    try:
+        match mode.lower():
+            case "aql":
+                return AQL_FIELDS
+            case "es":
+                return ELASTIC_FIELDS
+            case "defender":
+                return DEFENDER_CONFIG
+            case _:
+                raise ValueError(f"Unsupported mode: {mode}. Must be one of: {SUPPORTED_MODES}")
+    except Exception as e:
+        raise ValueError(f"Failed to get field mappings for {mode} mode: {e}")
+        

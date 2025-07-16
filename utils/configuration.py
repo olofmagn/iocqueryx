@@ -10,7 +10,7 @@ import sys
 import argparse
 import logging
 
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Tuple
 
 # =============================================================================
 # CONSTANTS AND CONFIGURATION
@@ -94,6 +94,7 @@ def validate_file_path(file_path: str) -> bool:
     
     Args:
     - file_path (str): Path to validate
+
     Returns:
     - bool: True if file path is valid string
     """
@@ -116,10 +117,8 @@ def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[st
         with open(file_path, 'r', encoding=encoding) as f:
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError as e:
-        logger.error(f"File not found: {file_path}")
         raise ValueError(f"No valid file provided or failed to read file. Check filepath.")
     except IOError as e:
-        logger.error(f"File read error: {e}")
         raise ValueError(f"No valid file provided or failed to read file. Check filepath.")
 
 def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
@@ -129,6 +128,7 @@ def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
     Args:
     - line (str): Line to process
     - delimiter (str): Column delimiter (default: comma)
+
     Returns:
     - str: First column value
     """
@@ -151,6 +151,7 @@ def extract_items(input_file: str) -> List[str]:
         sys.exit(1)
     
     lines = read_file_lines(input_file)
+
     return [extract_first_column(line) for line in lines]
 
 # =============================================================================
@@ -188,6 +189,7 @@ def create_single_condition(field: str, value, comparator: str = "=", wrap_value
     """
 
     formatted_value = format_condition_value(value, wrap_values, quote_char)
+    
     return f"{field}{comparator}{formatted_value}"
 
 def build_conditions(field: str, values: list, operator: str = "AND", wrap_values: bool = False, quote_char: str = "'", comparator: str = "=") -> str:
@@ -213,6 +215,7 @@ def build_conditions(field: str, values: list, operator: str = "AND", wrap_value
         create_single_condition(field, value, comparator, wrap_values, quote_char) 
         for value in values
     ]
+
     return f" {operator} ".join(conditions)
 
 # =============================================================================
@@ -299,18 +302,19 @@ def format_time_for_platform(value: int, unit: str, mode: str) -> str:
     
     is_defender_or_elastic = mode.lower() in DEFENDER_ES_PLATFORMS
     
-    if unit == "minutes":
-        return f"{value}m" if is_defender_or_elastic else f"{value} MINUTES"
-    elif unit == "hours":
-        return f"{value}h" if is_defender_or_elastic else f"{value} HOURS"
-    elif unit == "days":
-        if is_defender_or_elastic:
-            # Convert days to hours for Defender/Elastic
-            return f"{value * 24}h"
-        else:
-            return f"{value} DAYS"
-    
-    return None
+    match unit:
+        case "minutes":
+            return f"{value}m" if is_defender_or_elastic else f"{value} MINUTES"
+        case "hours":
+            return f"{value}h" if is_defender_or_elastic else f"{value} HOURS"
+        case "days":
+            if is_defender_or_elastic:
+                # Convert days to hours for Defender/Elastic
+                return f"{value * 24}h"
+            else:
+                return f"{value} DAYS"
+        case _:
+            return None
 
 def normalize_lookback(lookback: str, mode: str) -> Optional[str]:
     """
@@ -332,6 +336,7 @@ def normalize_lookback(lookback: str, mode: str) -> Optional[str]:
         return None
     
     value, unit = parsed
+
     return format_time_for_platform(value, unit, mode)
 
 # =============================================================================
@@ -408,6 +413,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser = create_base_parser()
     add_required_arguments(parser)
     add_optional_arguments(parser)
+    
     return parser
 
 # =============================================================================

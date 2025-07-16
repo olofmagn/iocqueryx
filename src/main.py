@@ -66,7 +66,7 @@ def main():
         
         if mode in (None, "EXIT"):
             print("Goodbye!")
-            sys.exit(0)
+            sys.exit(1)
         
         if mode == "CLI":
             parser = create_parser()
@@ -78,7 +78,7 @@ def main():
             root.mainloop()     
     except KeyboardInterrupt:
         print("\nOperation cancelled by user")
-        sys.exit(0)
+        sys.exit(1)
     
 if __name__ == "__main__":    
     main()    
