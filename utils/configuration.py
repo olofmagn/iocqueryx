@@ -251,7 +251,7 @@ def normalize_time_unit(unit: str) -> Optional[str]:
     
     return None
 
-def parse_lookback_string(lookback: str) -> Optional[tuple[int, str]]:
+def parse_lookback_string(lookback: str) -> Optional[Tuple[int, str]]:
     """
     Parse lookback string
 
@@ -259,7 +259,7 @@ def parse_lookback_string(lookback: str) -> Optional[tuple[int, str]]:
     - lookback (str): Lookback string to parse (e.g., "24h", "7d")
 
     Returns:
-    - Optional[tuple[int, str]]: (value, normalized_unit) or None if invalid
+    - Optional[Tuple[int, str]]: (value, normalized_unit) or None if invalid
     """
 
     lookback = lookback.strip()
@@ -453,7 +453,7 @@ def validate_hash_type(hash_type: str) -> bool:
 
     return hash_type.lower() in SUPPORTED_HASH_TYPES
 
-def validate_configuration_parameters(mode: str, item_type: str, hash_type: str = None) -> tuple[bool, str]:
+def validate_configuration_parameters(mode: str, item_type: str, hash_type: str = None) -> Tuple[bool, str]:
     """
     Validate configuration parameters
 
@@ -463,7 +463,7 @@ def validate_configuration_parameters(mode: str, item_type: str, hash_type: str 
     - hash_type (str): Hash type to validate (optional)
 
     Returns:
-    - tuple[bool, str]: (is_valid, error_message)
+    - Tuple[bool, str]: (is_valid, error_message)
     """
 
     if not validate_mode(mode):
