@@ -10,7 +10,7 @@ import sys
 import argparse
 import logging
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 
 # =============================================================================
 # CONSTANTS AND CONFIGURATION
