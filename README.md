@@ -20,6 +20,52 @@ This tool supports generating queries for the following platforms:
 - Automatically maps hash types to platform-specific field names.
 - Supported hash types: `md5`, `sha1`, `sha256`.
 
+### Field mappings
+The current field mappings supported by the platform reflect the most commonly used default configurations. However, depending on your event schema or data mapping, you may need to adjust these mappings manually in `utils/generate_queries.py`.
+```bash
+# AQL Platform Field Mappings
+AQL_FIELDS = { 
+    "ip": "sourceip",
+    "domain": "\"URL Domain\"",
+    "hash": {
+        "filehash": "\"File Hash\"",
+        "md5": "\"MD5 Hash\"",
+        "sha1": "\"SHA1 Hash\"",
+        "sha256": "\"SHA256 Hash\""
+    }   
+}
+
+# Elasticsearch Platform Field Mappings
+ELASTIC_FIELDS = { 
+    "ip": "source.ip",
+    "domain": "url.domain",
+    "hash": {
+        "md5": "file.hash.md5",
+        "sha1": "file.hash.sha1",
+        "sha256": "file.hash.sha256"
+    }   
+}
+
+# Microsoft Defender Platform Configuration
+DEFENDER_CONFIG = { 
+    "ip": {
+        "field": "RemoteIP",
+        "table": "DeviceNetworkEvents"
+    },  
+    "domain": {
+        "field": "RemoteUrl",
+        "table": "DeviceNetworkEvents"
+    },  
+    "hash": {
+        "table": "DeviceFileEvents",
+        "fields": {
+            "md5": "InitiatingProcessMD5",
+            "sha1": "InitiatingProcessSHA1",
+            "sha256": "SHA256"
+        }
+    }   
+}
+```
 ### Filtering Options
 #### Qradar AQL:
 - `qid` filter.

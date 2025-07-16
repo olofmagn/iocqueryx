@@ -15,9 +15,7 @@ import tkinter as tk
 from colorama import Fore, Style
 
 from .gui import QueryGeneratorGUI
-from utils import create_parser
-from utils import generate_query_from_args
-from utils import get_logger
+from utils import create_parser, generate_query_from_args, get_logger
 
 BANNER = rf"""
 
@@ -33,19 +31,20 @@ Enjoy using the app, and feel free to share any feature requests or feedback!
 Version: {VERSION} {AUTHOR}
 """
 
+
 def main():
     """
     Main driver
     """
 
-    logger = get_logger()  
-    
+    logger = get_logger()
+
     if len(sys.argv) > 1:
         parser = create_parser()
         try:
             args = parser.parse_args()
             query = generate_query_from_args(args)
-            print(query) 
+            print(query)
             logger.info("CLI query generated successfully")
         except SystemExit:
             logger.error("CLI argument parsing failed")
@@ -57,29 +56,29 @@ def main():
         return
 
     print(BANNER)
-    
+
     try:
         mode = questionary.select(
             "Choose interface mode:",
             choices=["GUI", "CLI", "EXIT"]
         ).ask()
-        
+
         if mode in (None, "EXIT"):
             print("Goodbye!")
-            sys.exit(0)
-        
+            sys.exit(1)
+
         if mode == "CLI":
             parser = create_parser()
             print(f"\n{Fore.YELLOW}{Style.BRIGHT}Here's how to use the CLI:\n{Style.RESET_ALL}")
             parser.print_help()
         else:  # GUI
             root = tk.Tk()
-            app = QueryGeneratorGUI(root)
-            root.mainloop()     
+            QueryGeneratorGUI(root)
+            root.mainloop()
     except KeyboardInterrupt:
         print("\nOperation cancelled by user")
-        sys.exit(0)
-    
-if __name__ == "__main__":    
-    main()    
+        sys.exit(1)
 
+
+if __name__ == "__main__":
+    main()

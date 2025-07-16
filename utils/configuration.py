@@ -10,7 +10,7 @@ import sys
 import argparse
 import logging
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Tuple
 
 # =============================================================================
 # CONSTANTS AND CONFIGURATION
@@ -20,15 +20,26 @@ from typing import Optional, List, Dict
 DEFAULT_LOGGER_NAME = "IocQueryx"
 DEFAULT_LOG_LEVEL = logging.INFO
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
+DEFAULT_ENCODING = "utf-8"
 
 # Supported Values
 SUPPORTED_MODES = ["aql", "es", "defender"]
 SUPPORTED_TYPES = ["ip", "domain", "hash"]
-SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256"]
+SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256", "filehash"]
 
-# Default Values
+SUPPORTED_ITEM_TYPES = ["ip", "domain", "hash"]
+
+# Hash Type Configuration
+STANDARD_HASH_TYPES = ["md5", "sha1", "sha256"]
+AQL_HASH_TYPES = STANDARD_HASH_TYPES + ["filehash"]
 DEFAULT_HASH_TYPE = "sha256"
-DEFAULT_ENCODING = "utf-8"
+
+# Platform-Specific Hash Types
+PLATFORM_HASH_TYPES = {
+    "aql": AQL_HASH_TYPES,
+    "es": STANDARD_HASH_TYPES,
+    "defender": STANDARD_HASH_TYPES
+}
 
 # Time Unit Mappings
 TIME_UNIT_PATTERNS = {
@@ -47,6 +58,7 @@ LOOKBACK_PATTERN = r"(\d+)\s*(minutes?|hours?|days?|min|m|h|d)"
 # File Processing Configuration
 CSV_DELIMITER = ","
 FIRST_COLUMN_INDEX = 0
+
 
 # =============================================================================
 # LOGGING UTILITIES
@@ -74,6 +86,7 @@ def get_logger(name: str = DEFAULT_LOGGER_NAME, level: int = DEFAULT_LOG_LEVEL) 
 
     return logger
 
+
 def create_module_logger() -> logging.Logger:
     """
     Create module logger
@@ -81,8 +94,10 @@ def create_module_logger() -> logging.Logger:
 
     return get_logger()
 
+
 # Module-level logger
 logger = create_module_logger()
+
 
 # =============================================================================
 # FILE PROCESSING UTILITIES
@@ -94,11 +109,13 @@ def validate_file_path(file_path: str) -> bool:
     
     Args:
     - file_path (str): Path to validate
+
     Returns:
     - bool: True if file path is valid string
     """
 
     return bool(file_path and file_path.strip())
+
 
 def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[str]:
     """
@@ -115,12 +132,11 @@ def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[st
     try:
         with open(file_path, 'r', encoding=encoding) as f:
             return [line.strip() for line in f if line.strip()]
-    except FileNotFoundError as e:
-        logger.error(f"File not found: {file_path}")
-        raise ValueError(f"No valid file provided or failed to read file. Check filepath.")
-    except IOError as e:
-        logger.error(f"File read error: {e}")
-        raise ValueError(f"No valid file provided or failed to read file. Check filepath.")
+    except FileNotFoundError:
+        raise ValueError(f"No valid file provided. Check filepath: {file_path}.")
+    except IOError:
+        raise ValueError(f"No valid file provided. Check filepath: {file_path}.")
+
 
 def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
     """
@@ -129,11 +145,13 @@ def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
     Args:
     - line (str): Line to process
     - delimiter (str): Column delimiter (default: comma)
+
     Returns:
     - str: First column value
     """
-    
+
     return line.split(delimiter)[FIRST_COLUMN_INDEX]
+
 
 def extract_items(input_file: str) -> List[str]:
     """
@@ -149,13 +167,28 @@ def extract_items(input_file: str) -> List[str]:
     if not validate_file_path(input_file):
         logger.error("Invalid file path provided")
         sys.exit(1)
-    
+
     lines = read_file_lines(input_file)
+
     return [extract_first_column(line) for line in lines]
+
 
 # =============================================================================
 # QUERY CONDITION UTILITIES
 # =============================================================================
+
+def get_supported_hash_types(mode: str) -> List[str]:
+    """
+    Get supported hash types for a specific mode.
+
+    Args:
+    - mode (str): Platform mode (e.g., 'aql', 'es', 'defender')
+
+    Returns:
+    - List[str]: List of supported hash types for the mode
+    """
+    return PLATFORM_HASH_TYPES.get(mode.lower(), SUPPORTED_HASH_TYPES)
+
 
 def format_condition_value(value, wrap_values: bool = False, quote_char: str = "'") -> str:
     """
@@ -172,7 +205,9 @@ def format_condition_value(value, wrap_values: bool = False, quote_char: str = "
 
     return f"{quote_char}{value}{quote_char}" if wrap_values else str(value)
 
-def create_single_condition(field: str, value, comparator: str = "=", wrap_values: bool = False, quote_char: str = "'") -> str:
+
+def create_single_condition(field: str, value, comparator: str = "=", wrap_values: bool = False,
+                            quote_char: str = "'") -> str:
     """
     Create single condition
 
@@ -188,9 +223,12 @@ def create_single_condition(field: str, value, comparator: str = "=", wrap_value
     """
 
     formatted_value = format_condition_value(value, wrap_values, quote_char)
+
     return f"{field}{comparator}{formatted_value}"
 
-def build_conditions(field: str, values: list, operator: str = "AND", wrap_values: bool = False, quote_char: str = "'", comparator: str = "=") -> str:
+
+def build_conditions(field: str, values: list, operator: str = "AND", wrap_values: bool = False, quote_char: str = "'",
+                     comparator: str = "=") -> str:
     """
     Build conditions
 
@@ -210,10 +248,12 @@ def build_conditions(field: str, values: list, operator: str = "AND", wrap_value
         return ""
 
     conditions = [
-        create_single_condition(field, value, comparator, wrap_values, quote_char) 
+        create_single_condition(field, value, comparator, wrap_values, quote_char)
         for value in values
     ]
+
     return f" {operator} ".join(conditions)
+
 
 # =============================================================================
 # TIME PROCESSING UTILITIES
@@ -232,6 +272,7 @@ def validate_time_value(value: int) -> bool:
 
     return value > 0
 
+
 def normalize_time_unit(unit: str) -> Optional[str]:
     """
     Normalize time unit
@@ -244,14 +285,14 @@ def normalize_time_unit(unit: str) -> Optional[str]:
     """
 
     unit_lower = unit.lower()
-    
+
     for normalized_unit, patterns in TIME_UNIT_PATTERNS.items():
         if unit_lower in patterns:
             return normalized_unit
-    
     return None
 
-def parse_lookback_string(lookback: str) -> Optional[tuple[int, str]]:
+
+def parse_lookback_string(lookback: str) -> Optional[Tuple[int, str]]:
     """
     Parse lookback string
 
@@ -259,7 +300,7 @@ def parse_lookback_string(lookback: str) -> Optional[tuple[int, str]]:
     - lookback (str): Lookback string to parse (e.g., "24h", "7d")
 
     Returns:
-    - Optional[tuple[int, str]]: (value, normalized_unit) or None if invalid
+    - Optional[Tuple[int, str]]: (value, normalized_unit) or None if invalid
     """
 
     lookback = lookback.strip()
@@ -269,22 +310,24 @@ def parse_lookback_string(lookback: str) -> Optional[tuple[int, str]]:
         return None
 
     value_str, unit = match.groups()
-    
+
     try:
         value = int(value_str)
     except ValueError:
         return None
-    
+
     if not validate_time_value(value):
         return None
-    
+
     normalized_unit = normalize_time_unit(unit)
+
     if normalized_unit is None:
         return None
-    
+
     return value, normalized_unit
 
-def format_time_for_platform(value: int, unit: str, mode: str) -> str:
+
+def format_time_for_platform(value: int, unit: str, mode: str) -> str | None:
     """
     Format time for platform
 
@@ -296,21 +339,23 @@ def format_time_for_platform(value: int, unit: str, mode: str) -> str:
     Returns:
     - str: Formatted time string for the platform
     """
-    
+
     is_defender_or_elastic = mode.lower() in DEFENDER_ES_PLATFORMS
-    
-    if unit == "minutes":
-        return f"{value}m" if is_defender_or_elastic else f"{value} MINUTES"
-    elif unit == "hours":
-        return f"{value}h" if is_defender_or_elastic else f"{value} HOURS"
-    elif unit == "days":
-        if is_defender_or_elastic:
-            # Convert days to hours for Defender/Elastic
-            return f"{value * 24}h"
-        else:
-            return f"{value} DAYS"
-    
-    return None
+
+    match unit:
+        case "minutes":
+            return f"{value}m" if is_defender_or_elastic else f"{value} MINUTES"
+        case "hours":
+            return f"{value}h" if is_defender_or_elastic else f"{value} HOURS"
+        case "days":
+            if is_defender_or_elastic:
+                # Convert days to hours for Defender/Elastic
+                return f"{value * 24}h"
+            else:
+                return f"{value} DAYS"
+        case _:
+            return None
+
 
 def normalize_lookback(lookback: str, mode: str) -> Optional[str]:
     """
@@ -326,13 +371,16 @@ def normalize_lookback(lookback: str, mode: str) -> Optional[str]:
 
     if not lookback or not mode:
         return None
-    
+
     parsed = parse_lookback_string(lookback)
+
     if parsed is None:
         return None
-    
+
     value, unit = parsed
+
     return format_time_for_platform(value, unit, mode)
+
 
 # =============================================================================
 # ARGUMENT PARSER UTILITIES
@@ -347,6 +395,7 @@ def create_base_parser() -> argparse.ArgumentParser:
         description="Generate threat hunting queries for fast lookup of IOCs",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
+
 
 def add_required_arguments(parser: argparse.ArgumentParser) -> None:
     """
@@ -375,6 +424,7 @@ def add_required_arguments(parser: argparse.ArgumentParser) -> None:
                         choices=SUPPORTED_TYPES,
                         help="The type of parameter ioc parameter to use")
 
+
 def add_optional_arguments(parser: argparse.ArgumentParser) -> None:
     """
     Add optional arguments
@@ -400,6 +450,7 @@ def add_optional_arguments(parser: argparse.ArgumentParser) -> None:
                         type=str,
                         help="Optional file to save query")
 
+
 def create_parser() -> argparse.ArgumentParser:
     """
     Create parser logic
@@ -408,7 +459,9 @@ def create_parser() -> argparse.ArgumentParser:
     parser = create_base_parser()
     add_required_arguments(parser)
     add_optional_arguments(parser)
+
     return parser
+
 
 # =============================================================================
 # VALIDATION UTILITIES
@@ -427,6 +480,7 @@ def validate_mode(mode: str) -> bool:
 
     return mode.lower() in SUPPORTED_MODES
 
+
 def validate_type(item_type: str) -> bool:
     """
     Validate type
@@ -439,6 +493,7 @@ def validate_type(item_type: str) -> bool:
     """
 
     return item_type.lower() in SUPPORTED_TYPES
+
 
 def validate_hash_type(hash_type: str) -> bool:
     """
@@ -453,7 +508,8 @@ def validate_hash_type(hash_type: str) -> bool:
 
     return hash_type.lower() in SUPPORTED_HASH_TYPES
 
-def validate_configuration_parameters(mode: str, item_type: str, hash_type: str = None) -> tuple[bool, str]:
+
+def validate_configuration_parameters(mode: str, item_type: str, hash_type: str = None) -> Tuple[bool, str]:
     """
     Validate configuration parameters
 
@@ -463,65 +519,15 @@ def validate_configuration_parameters(mode: str, item_type: str, hash_type: str 
     - hash_type (str): Hash type to validate (optional)
 
     Returns:
-    - tuple[bool, str]: (is_valid, error_message)
+    - Tuple[bool, str]: (is_valid, error_message)
     """
 
     if not validate_mode(mode):
         return False, f"Unsupported mode: {mode}. Must be one of: {SUPPORTED_MODES}"
-    
+
     if not validate_type(item_type):
         return False, f"Unsupported type: {item_type}. Must be one of: {SUPPORTED_TYPES}"
-    
+
     if item_type.lower() == "hash" and hash_type and not validate_hash_type(hash_type):
         return False, f"Unsupported hash type: {hash_type}. Must be one of: {SUPPORTED_HASH_TYPES}"
-    
     return True, ""
-
-# =============================================================================
-# CONFIGURATION INFO UTILITIES
-# =============================================================================
-
-def get_supported_configurations() -> Dict[str, List[str]]:
-    """
-    Get supported configurations
-    """
-
-    return {
-        "modes": SUPPORTED_MODES,
-        "types": SUPPORTED_TYPES,
-        "hash_types": SUPPORTED_HASH_TYPES
-    }
-
-def get_time_unit_examples() -> Dict[str, List[str]]:
-    """
-    Get time unit examples
-    """
-
-    return {
-        "minutes": ["5m", "10min", "30 minutes"],
-        "hours": ["1h", "3hours", "12 h"],
-        "days": ["1d", "7days", "30 d"]
-    }
-
-def get_platform_time_formats() -> Dict[str, Dict[str, str]]:
-    """
-    Get platform time formats
-    """
-
-    return {
-        "aql": {
-            "minutes": "30 MINUTES",
-            "hours": "2 HOURS", 
-            "days": "7 DAYS"
-        },
-        "defender": {
-            "minutes": "30m",
-            "hours": "2h",
-            "days": "168h"  # 7 days = 168 hours
-        },
-        "es": {
-            "minutes": "30m",
-            "hours": "2h", 
-            "days": "168h"  # 7 days = 168 hours
-        }
-    }

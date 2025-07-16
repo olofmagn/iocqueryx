@@ -9,8 +9,17 @@ import argparse
 
 from typing import List, Optional, Union, Dict
 
-from utils.configuration import create_parser, extract_items, normalize_lookback
-from utils.configuration import build_conditions
+from .configuration import (
+    create_parser,
+    extract_items,
+    build_conditions,
+    normalize_lookback,
+    SUPPORTED_MODES,
+    SUPPORTED_ITEM_TYPES,
+    SUPPORTED_HASH_TYPES,
+    PLATFORM_HASH_TYPES,
+    DEFAULT_HASH_TYPE
+)
 
 """
 Generate queries based on provided platform 'aql', 'elastic' or 'defender
@@ -20,23 +29,20 @@ Generate queries based on provided platform 'aql', 'elastic' or 'defender
 # PLATFORM FIELD MAPPINGS AND CONSTANTS
 # =============================================================================
 
-# Supported types and formats
-SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256"]
-SUPPORTED_ITEM_TYPES = ["ip", "domain", "hash"]
-SUPPORTED_MODES = ["aql", "es", "defender"]
 
 # AQL Platform Field Mappings
 AQL_FIELDS = {
-    "ip": "source ip",
-    "domain": "url domain",
+    "ip": "sourceip",
+    "domain": "\"URL Domain\"",
     "hash": {
-        "md5": "md5 hash",
-        "sha1": "sha1 hash",
-        "sha256": "sha256 hash"
+        "filehash": "\"File Hash\"",
+        "md5": "\"MD5 Hash\"",
+        "sha1": "\"SHA1 Hash\"",
+        "sha256": "\"SHA256 Hash\""
     }
 }
 
-# Elastic Search Platform Field Mappings
+# Elasticsearch Platform Field Mappings
 ELASTIC_FIELDS = {
     "ip": "source.ip",
     "domain": "url.domain",
@@ -48,7 +54,7 @@ ELASTIC_FIELDS = {
 }
 
 # Microsoft Defender Platform Configuration
-DEFENDER_CONFIG = {
+DEFENDER_FIELDS = {
     "ip": {
         "field": "RemoteIP",
         "table": "DeviceNetworkEvents"
@@ -67,13 +73,73 @@ DEFENDER_CONFIG = {
     }
 }
 
+
+# =============================================================================
+# VALIDATION UTILITY FUNCTIONS
+# =============================================================================
+
+def _validate_item_type(item_type: str) -> None:
+    """
+    Validate item type.
+
+    Args:
+    - item_type (str): Type of item to validate
+
+    Raises:
+    - ValueError: If item_type is not supported
+    """
+    if item_type not in SUPPORTED_ITEM_TYPES:
+        raise ValueError(f"Unsupported item_type: {item_type}. Must be one of: {SUPPORTED_ITEM_TYPES}")
+
+
+def _validate_hash_type(hash_type: str, mode: str = None) -> None:
+    """
+    Validate hash type for specific mode.
+
+    Args:
+    - hash_type (str): Hash type to validate
+    - mode (str): Platform mode for validation (optional)
+
+    Raises:
+    - ValueError: If hash_type is not supported
+    """
+
+    supported_types = PLATFORM_HASH_TYPES.get(mode, SUPPORTED_HASH_TYPES) if mode else SUPPORTED_HASH_TYPES
+
+    if hash_type.lower() not in supported_types:
+        raise ValueError(f"Unsupported hash_type: {hash_type}. Must be one of: {supported_types}")
+
+
+def _get_field_for_platform(platform_fields: Dict, item_type: str, hash_type: str, mode: str = None) -> str:
+    """
+    Get field for a specific platform.
+
+    Args:
+    - platform_fields (Dict): Platform-specific field mappings
+    - item_type (str): Type of item (ip, domain, hash)
+    - hash_type (str): Hash type for hash items
+    - mode (str): Platform mode for validation (optional)
+
+    Returns:
+    - str: Field name for the platform
+    """
+
+    _validate_item_type(item_type)
+
+    if item_type == "hash":
+        _validate_hash_type(hash_type, mode)
+        return platform_fields["hash"][hash_type.lower()]
+
+    return platform_fields[item_type]
+
+
 # =============================================================================
 # FIELD MAPPING HELPER FUNCTIONS
 # =============================================================================
 
-def get_aql_field(item_type: str, hash_type: str = "sha256") -> str:
+def get_aql_field(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> str:
     """
-    Get AQL field
+    Get AQL field.
 
     Args:
     - item_type (str): Type of item (ip, domain, hash)
@@ -82,20 +148,13 @@ def get_aql_field(item_type: str, hash_type: str = "sha256") -> str:
     Returns:
     - str: AQL field name
     """
-    
-    if item_type not in SUPPORTED_ITEM_TYPES:
-        raise ValueError(f"Unsupported item_type: {item_type}. Must be one of: {SUPPORTED_ITEM_TYPES}")
-    
-    if item_type == "hash":
-        if hash_type.lower() not in SUPPORTED_HASH_TYPES:
-            raise ValueError(f"Unsupported hash_type: {hash_type}. Must be one of: {SUPPORTED_HASH_TYPES}")
-        return AQL_FIELDS["hash"][hash_type.lower()]
-    
-    return AQL_FIELDS[item_type]
 
-def get_elastic_field(item_type: str, hash_type: str = "sha256") -> str:
+    return _get_field_for_platform(AQL_FIELDS, item_type, hash_type, "aql")
+
+
+def get_elastic_field(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> str:
     """
-    Get Elastic field
+    Get Elastic field.
 
     Args:
     - item_type (str): Type of item (ip, domain, hash)
@@ -105,19 +164,12 @@ def get_elastic_field(item_type: str, hash_type: str = "sha256") -> str:
     - str: Elastic field name
     """
 
-    if item_type not in SUPPORTED_ITEM_TYPES:
-        raise ValueError(f"Unsupported item_type: {item_type}. Must be one of: {SUPPORTED_ITEM_TYPES}")
-    
-    if item_type == "hash":
-        if hash_type.lower() not in SUPPORTED_HASH_TYPES:
-            raise ValueError(f"Unsupported hash_type: {hash_type}. Must be one of: {SUPPORTED_HASH_TYPES}")
-        return ELASTIC_FIELDS["hash"][hash_type.lower()]
-    
-    return ELASTIC_FIELDS[item_type]
+    return _get_field_for_platform(ELASTIC_FIELDS, item_type, hash_type, "es")
 
-def get_defender_config(item_type: str, hash_type: str = "sha256") -> Dict[str, str]:
+
+def get_defender_fields(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> Dict[str, str]:
     """
-    Get Defender config
+    Get Defender config.
 
     Args:
     - item_type (str): Type of item (ip, domain, hash)
@@ -127,24 +179,24 @@ def get_defender_config(item_type: str, hash_type: str = "sha256") -> Dict[str, 
     - Dict[str, str]: Dictionary with 'field' and 'table' keys
     """
 
-    if item_type not in SUPPORTED_ITEM_TYPES:
-        raise ValueError(f"Unsupported item_type: {item_type}. Must be one of: {SUPPORTED_ITEM_TYPES}")
-    
-    config = DEFENDER_CONFIG[item_type].copy()
-    
+    _validate_item_type(item_type)
+
+    config = DEFENDER_FIELDS[item_type].copy()
+
     if item_type == "hash":
-        if hash_type.lower() not in SUPPORTED_HASH_TYPES:
-            raise ValueError(f"Unsupported hash_type: {hash_type}. Must be one of: {SUPPORTED_HASH_TYPES}")
+        _validate_hash_type(hash_type, "defender")
         config["field"] = config["fields"][hash_type.lower()]
         del config["fields"]  # Clean up the nested structure
-    
+
     return config
+
 
 # =============================================================================
 # QUERY GENERATION FUNCTIONS
 # =============================================================================
 
-def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int]] = None, hash_type: str = "sha256", lookback: str = None) -> str:
+def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int]] = None, hash_type: str = "sha256",
+                       lookback: str = None) -> str:
     """
     Generate AQL query
 
@@ -160,22 +212,23 @@ def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int
     """
 
     qids = qids or []
-    
+
     field = get_aql_field(item_type, hash_type)
-    
+
     qid_condition = build_conditions(
         "qid", qids, operator="or", wrap_values=True, comparator="=")
     conditions = " or ".join([f"{field}='{item}'" for item in items])
 
     # Construct final query
     if qid_condition:
-        query = f"SELECT * from events where {conditions} AND ({qid_condition}) LAST {lookback}"
+        query = f"SELECT * from events where ({conditions}) AND ({qid_condition}) LAST {lookback}"
     else:
         query = f"SELECT * from events where ({conditions}) LAST {lookback}"
-
     return query
 
-def generate_elastic_query(items: List[str], item_type: str, event_actions: Optional[List[str]] = None, hash_type: str = "sha256", lookback: str = None) -> str:
+
+def generate_elastic_query(items: List[str], item_type: str, event_actions: Optional[List[str]] = None,
+                           hash_type: str = "sha256", lookback: str = None) -> str:
     """
     Generate elastic query
 
@@ -191,19 +244,20 @@ def generate_elastic_query(items: List[str], item_type: str, event_actions: Opti
     """
 
     event_actions = event_actions or []
-    
+
     field = get_elastic_field(item_type, hash_type)
-    
-    event_action_condition = build_conditions("event.action", event_actions, operator="or", wrap_values=True, quote_char="'", comparator=":")
+
+    event_action_condition = build_conditions("event.action", event_actions, operator="or", wrap_values=True,
+                                              quote_char="'", comparator=":")
     conditions = " or ".join([f"{field}:'{item}'" for item in items])
 
     # Construct final query
     if event_action_condition:
-        query = f"{conditions} and ({event_action_condition}) and @timestamp >= now-{lookback}"
+        query = f"({conditions}) and ({event_action_condition}) and @timestamp >= now-{lookback}"
     else:
-        query = f"{conditions} and @timestamp >= now-{lookback}"
-
+        query = f"({conditions}) and @timestamp >= now-{lookback}"
     return query
+
 
 def generate_defender_query(items: List[str], item_type: str, hash_type: str = "sha256", lookback: str = None) -> str:
     """
@@ -214,19 +268,20 @@ def generate_defender_query(items: List[str], item_type: str, hash_type: str = "
     - item_type (str): 'ip', 'domain' or 'hash' to generate queries
     - hash_type (str): Hash type for hash queries (default: sha256)
     - lookback (str): Time range for the query
-    
+
     Returns:
     - str: Defender Query string
     """
 
-    config = get_defender_config(item_type, hash_type)
+    config = get_defender_fields(item_type, hash_type)
     field = config["field"]
     table = config["table"]
-    
+
     conditions = " or ".join([f"{field} contains '{item}'" for item in items])
-    
+
     # Construct final query
     return f"{table} \n | where {conditions} \n | where Timestamp > ago({lookback})"
+
 
 # =============================================================================
 # MAIN QUERY GENERATION ORCHESTRATOR
@@ -246,71 +301,72 @@ def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=
 
     if parser is None:
         parser = create_parser()
-    
+
     # If args is a list of command arguments, parse them
     if isinstance(args, list):
         try:
             args = parser.parse_args(args)
         except SystemExit as e:
             raise ValueError(f"Failed to parse arguments: {e}")
-    
+
     # Validate required arguments
     if not hasattr(args, 'input') or not args.input:
         raise ValueError("Input file is required")
-    
+
     if not hasattr(args, 'lookback') or not args.lookback:
         raise ValueError("Lookback time is required")
-    
+
     if not hasattr(args, 'mode') or not args.mode:
         raise ValueError("Mode is required")
-    
+
     if not hasattr(args, 'type') or not args.type:
         raise ValueError("Type is required")
-    
+
     # Validate mode and type values
     if args.mode.lower() not in SUPPORTED_MODES:
         raise ValueError(f"Unsupported mode: {args.mode}. Must be one of: {SUPPORTED_MODES}")
-    
+
     if args.type.lower() not in SUPPORTED_ITEM_TYPES:
         raise ValueError(f"Unsupported type: {args.type}. Must be one of: {SUPPORTED_ITEM_TYPES}")
-    
+
     # Validate hash type if needed
     if args.type.lower() == "hash":
         if not hasattr(args, 'hash_type') or not args.hash_type:
-            args.hash_type = "sha256"  # Default
-        elif args.hash_type.lower() not in SUPPORTED_HASH_TYPES:
-            raise ValueError(f"Unsupported hash_type: {args.hash_type}. Must be one of: {SUPPORTED_HASH_TYPES}")
-    
+            args.hash_type = DEFAULT_HASH_TYPE  # Default
+        else:
+            supported_hash_types = PLATFORM_HASH_TYPES.get(args.mode.lower(), SUPPORTED_HASH_TYPES)
+            if args.hash_type.lower() not in supported_hash_types:
+                raise ValueError(
+                    f"Unsupported hash_type: {args.hash_type} for {args.mode}. Must be one of: {supported_hash_types}")
+
     # Extract items from input file
     items = extract_items(args.input)
+
     if not items:
         raise ValueError(f"No valid items found in input file: {args.input}")
-    
+
     # Normalize lookback time
     try:
         lookback = normalize_lookback(args.lookback, args.mode)
         if lookback is None:
-            raise ValueError(f"Invalid lookback format: '{args.lookback}'. Valid formats: 5m, 10m, 30m, 1h, 3h, 12h, 1d")
+            raise ValueError(
+                f"Invalid lookback format: '{args.lookback}'. Valid formats: 5m, 10m, 30m, 1h, 3h, 12h, 1d")
     except Exception as e:
         raise ValueError(f"Failed to normalize lookback time: {e}")
-    
+
     # Generate query based on mode
-    try:
-        match args.mode.lower():
-            case "aql":
-                if not hasattr(args, 'qid'):
-                    raise ValueError("QID is required for AQL mode")
-                return generate_aql_query(items, args.type, args.qid, args.hash_type, lookback=lookback)
-            case "es":
-                if not hasattr(args, 'event_action'):
-                    raise ValueError("Event action is required for ES mode")
-                return generate_elastic_query(items, args.type, args.event_action, args.hash_type, lookback=lookback)
-            case "defender":
-                return generate_defender_query(items, args.type, args.hash_type, lookback=lookback)
-            case _:
-                raise ValueError(f"Unsupported mode: {args.mode}. Supported modes: {SUPPORTED_MODES}")    
-    except Exception as e:
-        raise ValueError(f"Failed to generate {args.mode} query: {e}")
+    match args.mode.lower():
+        case "aql":
+            qid_list = getattr(args, 'qid', [])
+            return generate_aql_query(items, args.type, qid_list, args.hash_type, lookback=lookback)
+        case "es":
+            event_actions = getattr(args, 'event_action', [])
+            return generate_elastic_query(items, args.type, event_actions, args.hash_type, lookback=lookback)
+        case "defender":
+            return generate_defender_query(items, args.type, args.hash_type, lookback=lookback)
+        case _:
+            raise ValueError(f"Unsupported mode: {args.mode}. Supported modes: {SUPPORTED_MODES}")
+
 
 # =============================================================================
 # UTILITY FUNCTIONS
@@ -328,12 +384,13 @@ def validate_query_parameters(item_type: str, mode: str, hash_type: str = "sha25
 
     if item_type not in SUPPORTED_ITEM_TYPES:
         raise ValueError(f"Unsupported item_type: {item_type}. Must be one of: {SUPPORTED_ITEM_TYPES}")
-    
+
     if mode not in SUPPORTED_MODES:
         raise ValueError(f"Unsupported mode: {mode}. Must be one of: {SUPPORTED_MODES}")
-    
+
     if item_type == "hash" and hash_type.lower() not in SUPPORTED_HASH_TYPES:
         raise ValueError(f"Unsupported hash_type: {hash_type}. Must be one of: {SUPPORTED_HASH_TYPES}")
+
 
 def get_supported_combinations() -> Dict[str, List[str]]:
     """
@@ -349,6 +406,7 @@ def get_supported_combinations() -> Dict[str, List[str]]:
         "hash_types": SUPPORTED_HASH_TYPES
     }
 
+
 def get_field_mapping_for_mode(mode: str) -> Dict:
     """
     Get field mappings
@@ -360,12 +418,12 @@ def get_field_mapping_for_mode(mode: str) -> Dict:
     - Dict: Field mapping configuration for the specified mode
     """
 
-    mode = mode.lower()
-    if mode == "aql":
-        return AQL_FIELDS
-    elif mode == "es":
-        return ELASTIC_FIELDS
-    elif mode == "defender":
-        return DEFENDER_CONFIG
-    else:
-        raise ValueError(f"Unsupported mode: {mode}. Must be one of: {SUPPORTED_MODES}")
+    match mode.lower():
+        case "aql":
+            return AQL_FIELDS
+        case "es":
+            return ELASTIC_FIELDS
+        case "defender":
+            return DEFENDER_FIELDS
+        case _:
+            raise ValueError(f"Unsupported mode: {mode}. Must be one of: {SUPPORTED_MODES}")
