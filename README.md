@@ -35,7 +35,7 @@ AQL_FIELDS = {
     }   
 }
 
-# Elastic Search Platform Field Mappings
+# Elasticsearch Platform Field Mappings
 ELASTIC_FIELDS = { 
     "ip": "source.ip",
     "domain": "url.domain",

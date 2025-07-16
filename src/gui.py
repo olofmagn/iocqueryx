@@ -1,21 +1,27 @@
 """
-A simple program that generates a search query based on a given list to identify first point of contact for further investigation.
+A simple program that generates a search query based on a given list to identify first point of contact
 
 Author: Olof Magnusson
 Date: 2025-07-02
 """
 
-import tkinter as tk
 import sys
-
-from typing import Optional, List, Tuple
-
+import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
+from typing import Optional, List, Tuple
 
 from utils.generate_queries import generate_query_from_args
-from utils.configuration import get_logger
-from utils.configuration import normalize_lookback
+
+from utils.configuration import (
+    get_logger,
+    get_supported_hash_types,
+    normalize_lookback,
+    SUPPORTED_MODES,
+    SUPPORTED_ITEM_TYPES as SUPPORTED_TYPES,
+    SUPPORTED_HASH_TYPES,
+    DEFAULT_HASH_TYPE
+)
 
 # =============================================================================
 # CONSTANTS AND CONFIGURATION
@@ -27,6 +33,11 @@ DEFAULT_WINDOW_HEIGHT = 400
 DEFAULT_OUTPUT_HEIGHT = 10
 WINDOW_TITLE = "IocQueryX - IOC Hunting Query Generator"
 WINDOW_PADDING = 10
+
+# Default Values
+DEFAULT_MODE = "aql"
+DEFAULT_TYPE = "ip"
+DEFAULT_TIME_RANGE_INDEX = 1  # "10 MINUTES"
 
 # Widget Styling Constants
 WIDGET_PADDING_X = 2
@@ -52,8 +63,6 @@ TIME_RANGES = [
     ("1d", "1 DAY")
 ]
 
-DEFAULT_TIME_RANGE_INDEX = 1  # "10 MINUTES"
-
 # Mode Configuration
 MODE_CONFIGS = {
     "aql": {
@@ -63,7 +72,7 @@ MODE_CONFIGS = {
         "show_ea": False
     },
     "es": {
-        "info": "Using Elastic Search query mode", 
+        "info": "Using Elastic Search query mode",
         "label": "EA:",
         "show_qid": False,
         "show_ea": True
@@ -76,31 +85,11 @@ MODE_CONFIGS = {
     }
 }
 
-# Default Values
-DEFAULT_MODE = "aql"
-DEFAULT_TYPE = "ip"
-DEFAULT_HASH_TYPE = "sha256"
-
-# Supported Options
-SUPPORTED_MODES = ["aql", "es", "defender"]
-SUPPORTED_TYPES = ["ip", "domain", "hash"]
-SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256", "filehash"]
-
-## Hash Type Configuration
-STANDARD_HASH_TYPES = ["md5", "sha1", "sha256"]
-AQL_HASH_TYPES = STANDARD_HASH_TYPES + ["filehash"]
-
-# Platform-Specific Hash Types
-PLATFORM_HASH_TYPES = {
-    "aql": AQL_HASH_TYPES,
-    "es": STANDARD_HASH_TYPES,
-    "defender": STANDARD_HASH_TYPES
-}
-
 # UI Text Constants
 COPYRIGHT_TEXT = "© 2025 olofmagn"
 COPYRIGHT_FONT = ("Segoe UI", 8, "italic")
 COPYRIGHT_COLOR = "gray50"
+
 
 # =============================================================================
 # TIME RANGE UTILITIES
@@ -116,6 +105,7 @@ def get_display_values() -> List[str]:
 
     return [display for _, display in TIME_RANGES]
 
+
 def get_default_time_display() -> str:
     """
     Get default time range display value
@@ -125,6 +115,7 @@ def get_default_time_display() -> str:
     """
 
     return get_display_values()[DEFAULT_TIME_RANGE_INDEX]
+
 
 def cycle_time_range_value(current_value: str, direction: int, display_values: List[str]) -> str:
     """
@@ -148,6 +139,7 @@ def cycle_time_range_value(current_value: str, direction: int, display_values: L
 
     return display_values[new_idx]
 
+
 # =============================================================================
 # VALIDATION UTILITIES
 # =============================================================================
@@ -166,19 +158,20 @@ def validate_comma_separated_items(raw_input: str, is_numeric: bool = False) -> 
 
     if not raw_input.strip():
         return True, [], ""
-    
+
     items = [item.strip() for item in raw_input.split(",") if item.strip()]
-    
+
     if not items:
         return False, [], "contains no valid entries."
-    
+
     if is_numeric:
         invalid_items = [item for item in items if not item.isdigit()]
         if invalid_items:
             invalid_list = "', '".join(invalid_items)
             return False, [], f"contains invalid integers: '{invalid_list}'"
-    
+
     return True, items, ""
+
 
 def validate_file_input(file_path: str) -> bool:
     """
@@ -190,8 +183,9 @@ def validate_file_input(file_path: str) -> bool:
     Returns:
     - bool: True if valid file path
     """
-    
+
     return bool(file_path and file_path.strip())
+
 
 # =============================================================================
 # ERROR HANDLING UTILITIES
@@ -208,6 +202,7 @@ def show_error_message(title: str, message: str) -> None:
 
     messagebox.showerror(title, message)
 
+
 def show_info_message(title: str, message: str) -> None:
     """
     Show info message
@@ -219,6 +214,7 @@ def show_info_message(title: str, message: str) -> None:
 
     messagebox.showinfo(title, message)
 
+
 def log_error_message(logger, message: str) -> None:
     """
     Show log error message
@@ -229,6 +225,7 @@ def log_error_message(logger, message: str) -> None:
     """
 
     logger.error(message)
+
 
 # =============================================================================
 # QUERY ARGUMENT UTILITIES
@@ -248,7 +245,7 @@ def build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_t
     Returns:
     - List[str]: Base arguments list
     """
-    
+
     return [
         "-i", input_file,
         "-m", mode,
@@ -257,7 +254,21 @@ def build_base_query_arguments(input_file: str, mode: str, type_val: str, hash_t
         "-l", lookback
     ]
 
-def extend_arguments_for_mode(base_args: List[str], mode: str, qids: List[str] = None, eas: List[str] = None) -> List[str]:
+
+def hide_entry_widget(widget) -> None:
+    """
+    Hide entry widget if visible.
+
+    Args:
+    - widget: Widget to hide
+    """
+
+    if widget.winfo_viewable():
+        widget.grid_remove()
+
+
+def extend_arguments_for_mode(base_args: List[str], mode: str, qids: List[str] = None, eas: List[str] = None) -> List[
+    str]:
     """
     Extend arguments for mode
 
@@ -272,47 +283,14 @@ def extend_arguments_for_mode(base_args: List[str], mode: str, qids: List[str] =
     """
 
     args = base_args.copy()
-    
-    if mode == "aql" and qids:
-        args.extend(["-q"] + qids)
-    elif mode == "es" and eas:
-        args.extend(["-ea"] + eas)
-    
+    match mode:
+        case "aql":
+            if qids:
+                args.extend(["-q"] + qids)
+        case "es":
+            if eas:
+                args.extend(["-ea"] + eas)
     return args
-
-
-# =============================================================================
-# HASH TYPE UTILITIES
-# =============================================================================
-
-def get_supported_hash_types(mode: str) -> List[str]:
-    """
-    Get supported hash types for a specific mode.
-    
-    Args:
-    - mode (str): Query mode (e.g., 'aql', 'es', 'defender')
-    
-    Returns:
-    - List[str]: List of supported hash types for the mode
-    """
-
-    return PLATFORM_HASH_TYPES.get(mode.lower(), SUPPORTED_HASH_TYPES)
-
-def get_default_hash_type(mode: str) -> str:
-    """
-    Get default hash type for a specific mode.
-    
-    Args:
-    - mode (str): Query mode
-    
-    Returns:
-    - str: Default hash type for the mode
-    """
-
-    supported_types = get_supported_hash_types(mode)
-    
-    return supported_types[0] if supported_types else DEFAULT_HASH_TYPE
-
 
 # =============================================================================
 # MAIN GUI CLASS
@@ -329,7 +307,7 @@ class QueryGeneratorGUI:
         self.logger = get_logger()
         self.saved_qid_input = ""
         self.saved_ea_input = ""
-        
+
         # Window size constants 
         self.MAX_WIDTH = DEFAULT_WINDOW_WIDTH
         self.MAX_HEIGHT = DEFAULT_WINDOW_HEIGHT
@@ -370,7 +348,7 @@ class QueryGeneratorGUI:
 
         return self.mode_var.get().lower()
 
-    @property 
+    @property
     def current_type(self) -> str:
         """
         Current type
@@ -384,7 +362,7 @@ class QueryGeneratorGUI:
     @property
     def current_hash_type(self) -> str:
         """
-        Current hash hash type
+        Current hash type
 
         Returns:
         - str: Current hash type selection
@@ -413,76 +391,95 @@ class QueryGeneratorGUI:
         """
 
         # === Input file ===
-        ttk.Label(self.frame, text="Input File:").grid(row=0, column=0, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        ttk.Label(self.frame, text="Input File:").grid(row=0, column=0, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X,
+                                                       pady=WIDGET_PADDING_Y)
         self.input_entry_var = ttk.Entry(self.frame)
-        self.input_entry_var.grid(row=0, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
-        ttk.Button(self.frame, text="Browse", command=self.browse_file).grid(row=0, column=2, sticky=GRID_STICKY_EAST, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        self.input_entry_var.grid(row=0, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                  pady=WIDGET_PADDING_Y)
+        ttk.Button(self.frame, text="Browse", command=self._browse_file).grid(row=0, column=2, sticky=GRID_STICKY_EAST,
+                                                                              padx=WIDGET_PADDING_X,
+                                                                              pady=WIDGET_PADDING_Y)
 
         # === Mode selection ===
-        ttk.Label(self.frame, text="Mode:").grid(row=1, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        ttk.Label(self.frame, text="Mode:").grid(row=1, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                                 pady=WIDGET_PADDING_Y)
         self.mode_var = tk.StringVar(value=DEFAULT_MODE)
         self.mode_combobox = ttk.Combobox(self.frame,
-                                          textvariable=self.mode_var, 
+                                          textvariable=self.mode_var,
                                           values=SUPPORTED_MODES,
                                           state="readonly")
-        self.mode_combobox.grid(row=1, column=1, columnspan=2, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        self.mode_combobox.grid(row=1, column=1, columnspan=2, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                pady=WIDGET_PADDING_Y)
 
         # === Type selection ===
-        ttk.Label(self.frame, text="Type:").grid(row=2, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        ttk.Label(self.frame, text="Type:").grid(row=2, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                                 pady=WIDGET_PADDING_Y)
         self.type_var = tk.StringVar(value=DEFAULT_TYPE)
-        self.type_combobox = ttk.Combobox(self.frame, 
-                                          textvariable=self.type_var, 
+        self.type_combobox = ttk.Combobox(self.frame,
+                                          textvariable=self.type_var,
                                           values=SUPPORTED_TYPES,
                                           state="readonly")
-        self.type_combobox.grid(row=2, column=1, columnspan=2, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        self.type_combobox.grid(row=2, column=1, columnspan=2, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                pady=WIDGET_PADDING_Y)
 
         # === Hash type ===
         self.hash_type_label = ttk.Label(self.frame, text="Hash Type:")
-        self.hash_type_label.grid(row=3, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        self.hash_type_label.grid(row=3, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                  pady=WIDGET_PADDING_Y)
         self.hash_type_var = tk.StringVar(value=DEFAULT_HASH_TYPE)
-        self.hash_type_combobox = ttk.Combobox(self.frame, 
-                                               textvariable=self.hash_type_var, 
+        self.hash_type_combobox = ttk.Combobox(self.frame,
+                                               textvariable=self.hash_type_var,
                                                values=SUPPORTED_HASH_TYPES,
                                                state="readonly")
-        self.hash_type_combobox.grid(row=3, column=1, columnspan=2, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        self.hash_type_combobox.grid(row=3, column=1, columnspan=2, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                     pady=WIDGET_PADDING_Y)
 
         # === QID/EA ===
         self.input_label = ttk.Label(self.frame, text="QID:")
         self.input_label.grid(row=4, column=0, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
         self.qid_entry = ttk.Entry(self.frame)
-        self.qid_entry.grid(row=4, column=1, columnspan=2, sticky=GRID_STICKY_EAST, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        self.qid_entry.grid(row=4, column=1, columnspan=2, sticky=GRID_STICKY_EAST, padx=WIDGET_PADDING_X,
+                            pady=WIDGET_PADDING_Y)
 
         self.ea_entry = ttk.Entry(self.frame)
-        self.ea_entry.grid(row=4, column=1, columnspan=2, sticky=GRID_STICKY_EAST, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        self.ea_entry.grid(row=4, column=1, columnspan=2, sticky=GRID_STICKY_EAST, padx=WIDGET_PADDING_X,
+                           pady=WIDGET_PADDING_Y)
         self.ea_entry.grid_remove()  # Hide by default
 
         # === Time range ===
         ttk.Label(self.frame, text="Time Range:").grid(row=6, column=0, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X)
         time_frame = ttk.Frame(self.frame)
-        time_frame.grid(row=6, column=1, columnspan=2, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        time_frame.grid(row=6, column=1, columnspan=2, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X,
+                        pady=WIDGET_PADDING_Y)
         self.lookback_var = tk.StringVar(value=self.display_values[DEFAULT_TIME_RANGE_INDEX])
         self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=TIME_ENTRY_WIDTH)
         self.time_entry.pack(side="left")
-        
-        self.btn_time_prev = ttk.Button(time_frame, text="❮", style="Arrow.TButton", 
-                                       padding=ARROW_BUTTON_PADDING, width=ARROW_BUTTON_WIDTH, 
-                                       command=lambda: self.change_time_range(-1))
+
+        self.btn_time_prev = ttk.Button(time_frame, text="❮", style="Arrow.TButton",
+                                        padding=ARROW_BUTTON_PADDING, width=ARROW_BUTTON_WIDTH,
+                                        command=lambda: self._change_time_range(-1))
         self.btn_time_prev.pack(side="left", padx=1)
-        self.btn_time_next = ttk.Button(time_frame, text="❯", style="Arrow.TButton", 
-                                       padding=ARROW_BUTTON_PADDING, width=ARROW_BUTTON_WIDTH, 
-                                       command=lambda: self.change_time_range(1))
+        self.btn_time_next = ttk.Button(time_frame, text="❯", style="Arrow.TButton",
+                                        padding=ARROW_BUTTON_PADDING, width=ARROW_BUTTON_WIDTH,
+                                        command=lambda: self._change_time_range(1))
         self.btn_time_next.pack(side="right", padx=1)
 
         # === Generate query ===
-        ttk.Button(self.frame, text="Generate Query", command=self.generate_query).grid(row=7, column=0, columnspan=3, pady=10, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X)
+        ttk.Button(self.frame, text="Generate Query", command=self._generate_query).grid(row=7, column=0, columnspan=3,
+                                                                                         pady=10,
+                                                                                         sticky=GRID_STICKY_NSEW,
+                                                                                         padx=WIDGET_PADDING_X)
 
         # === Output text ===
         self.output_text = ScrolledText(self.frame, height=self.OUTPUT_HEIGHT, wrap=tk.WORD)
         self.output_text.grid(row=8, column=0, columnspan=3, sticky=GRID_STICKY_NSEW, pady=5, padx=WIDGET_PADDING_X)
-        
+
         # === Copy to Clipboard ===
-        ttk.Button(self.frame, text="Copy to Clipboard", command=self.copy_to_clipboard).grid(row=9, column=0, columnspan=3, pady=5, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X)
-        
+        ttk.Button(self.frame, text="Copy to Clipboard", command=self.copy_to_clipboard).grid(row=9, column=0,
+                                                                                              columnspan=3, pady=5,
+                                                                                              sticky=GRID_STICKY_NSEW,
+                                                                                              padx=WIDGET_PADDING_X)
+
         # === Separator ===
         separator = ttk.Separator(self.frame, orient='horizontal')
         separator.grid(row=10, column=0, columnspan=3, sticky='nsew', pady=(10, 5))
@@ -510,7 +507,7 @@ class QueryGeneratorGUI:
         self.mode_var.trace_add("write", lambda *args: self._update_mode_visibility())
         self.type_var.trace_add("write", lambda *args: self._update_hash_type_visibility())
 
-    def browse_file(self) -> None:
+    def _browse_file(self) -> None:
         """
         Browse fields
         """
@@ -524,7 +521,7 @@ class QueryGeneratorGUI:
             show_error_message("Error", f"Failed to load file: {e}")
             sys.exit(1)
 
-    def change_time_range(self, direction: int) -> None:
+    def _change_time_range(self, direction: int) -> None:
         """
         Change time range
 
@@ -534,6 +531,7 @@ class QueryGeneratorGUI:
 
         new_value = cycle_time_range_value(self.current_lookback, direction, self.display_values)
         self.lookback_var.set(new_value)
+        self.logger.info("Time range changed")
 
     # =========================================================================
     # INPUT VALIDATION METHODS
@@ -566,7 +564,8 @@ class QueryGeneratorGUI:
             return False
         return True
 
-    def _validate_comma_separated_input(self, raw_input: str, label: str, is_numeric: bool = False) -> Optional[List[str]]:
+    def _validate_comma_separated_input(self, raw_input: str, label: str, is_numeric: bool = False) -> Optional[
+        List[str]]:
         """
         Validate comma seperated input
 
@@ -580,11 +579,11 @@ class QueryGeneratorGUI:
         """
 
         is_valid, items, error_msg = validate_comma_separated_items(raw_input, is_numeric)
-        
+
         if not is_valid:
             self._show_validation_error(f"{label} {error_msg}")
             return None
-        
+
         return items
 
     def _show_validation_error(self, message: str) -> None:
@@ -609,7 +608,7 @@ class QueryGeneratorGUI:
         Returns:
         - List[str]: Base arguments list for query generation
         """
-        
+
         return build_base_query_arguments(
             self.input_entry_var.get(),
             self.current_mode,
@@ -629,19 +628,19 @@ class QueryGeneratorGUI:
         - Optional[List[str]]: Complete arguments list or None if validation fails
         """
 
-        if self.current_mode == "aql":
-            qids = self._validate_comma_separated_input(self.qid_entry.get(), "QID", is_numeric=True)
-            if qids is None:
-                return None
-            return extend_arguments_for_mode(base_args, self.current_mode, qids=qids)
-        
-        elif self.current_mode == "es":
-            eas = self._validate_comma_separated_input(self.ea_entry.get(), "EA")
-            if eas is None:
-                return None
-            return extend_arguments_for_mode(base_args, self.current_mode, eas=eas)
-        
-        return base_args
+        match self.current_mode:
+            case "aql":
+                qids = self._validate_comma_separated_input(self.qid_entry.get(), "QID", is_numeric=True)
+                if qids is None:
+                    return None
+                return extend_arguments_for_mode(base_args, self.current_mode, qids=qids)
+            case "es":
+                eas = self._validate_comma_separated_input(self.ea_entry.get(), "EA")
+                if eas is None:
+                    return None
+                return extend_arguments_for_mode(base_args, self.current_mode, eas=eas)
+            case _:
+                return base_args
 
     def _display_query(self, query: str) -> None:
         """
@@ -669,7 +668,7 @@ class QueryGeneratorGUI:
         if exit_on_error:
             sys.exit(1)
 
-    def generate_query(self) -> None:
+    def _generate_query(self) -> None:
         """
         Generate query
         """
@@ -678,25 +677,26 @@ class QueryGeneratorGUI:
             # Validate inputs
             if not self._validate_inputs():
                 return
-            
+
             # Validate time range
             if not self._validate_time_range():
                 return
-            
+
             # Build base arguments
             base_args = self._build_base_args()
-            
+
             # Add mode-specific arguments
             final_args = self._build_mode_specific_args(base_args)
             if final_args is None:
                 return
-            
+
             # Generate query
             query = generate_query_from_args(final_args)
-            
+
             # Display result
             self._display_query(query)
-            
+            self.logger.info("Query issued")
+
         except ValueError as e:
             self._handle_error("Input Error", str(e), exit_on_error=False)
         except Exception as e:
@@ -710,41 +710,76 @@ class QueryGeneratorGUI:
         """
         Update mode visibility
         """
-
         mode = self.current_mode
         config = self.MODE_CONFIGS.get(mode, self.MODE_CONFIGS["aql"])
-        
+
         # Update labels
         self.platform_info_label.config(text=config["info"])
         self.input_label.config(text=config["label"])
 
+        # Update hash type options based on mode
         self._update_hash_types_for_mode(mode)
-        
-        # Handle QID entry widget
-        if config["show_qid"]:
-            if not self.qid_entry.winfo_viewable():  # Only show if hidden
-                self.saved_ea_input = self.ea_entry.get()
-                self.qid_entry.delete(0, tk.END)
-                self.qid_entry.insert(0, self.saved_qid_input)
-                self.qid_entry.grid()
-            if self.ea_entry.winfo_viewable():  # Hide EA if visible
-                self.ea_entry.grid_remove()
+
+        # Handle QID/EA widget visibility
+        self._toggle_entry_widgets(
+            show_qid=config["show_qid"],
+            show_ea=config["show_ea"]
+        )
+
+    def _toggle_entry_widgets(self, show_qid: bool, show_ea: bool) -> None:
+        """
+        Toggle QID and EA entry widget visibility.
+
+        Args:
+        - show_qid (bool): Whether to show QID entry
+        - show_ea (bool): Whether to show EA entry
+        """
+
+        # Handle QID entry
+        if show_qid:
+            self._show_entry_widget(
+                widget_to_show=self.qid_entry,
+                widget_to_hide=self.ea_entry,
+                restore_var="saved_qid_input",
+                save_var="saved_ea_input"
+            )
         else:
-            if self.qid_entry.winfo_viewable():  # Only hide if visible
-                self.qid_entry.grid_remove()
-        
-        # Handle EA entry widget  
-        if config["show_ea"]:
-            if not self.ea_entry.winfo_viewable():  # Only show if hidden
-                self.saved_qid_input = self.qid_entry.get()
-                self.ea_entry.delete(0, tk.END)
-                self.ea_entry.insert(0, self.saved_ea_input)
-                self.ea_entry.grid()
-            if self.qid_entry.winfo_viewable():  # Hide QID if visible
-                self.qid_entry.grid_remove()
+            hide_entry_widget(self.qid_entry)
+
+        # Handle EA entry
+        if show_ea:
+            self._show_entry_widget(
+                widget_to_show=self.ea_entry,
+                widget_to_hide=self.qid_entry,
+                restore_var="saved_ea_input",
+                save_var="saved_qid_input"
+            )
         else:
-            if self.ea_entry.winfo_viewable():  # Only hide if visible
-                self.ea_entry.grid_remove()
+            hide_entry_widget(self.ea_entry)
+
+    def _show_entry_widget(self, widget_to_show, widget_to_hide, restore_var: str, save_var: str) -> None:
+        """
+        Show entry widget and manage state.
+
+        Args:
+        - widget_to_show: Widget to make visible
+        - widget_to_hide: Widget to hide
+        - restore_var (str): Attribute name for restoring saved input
+        - save_var (str): Attribute name for saving current input
+        """
+
+        if not widget_to_show.winfo_viewable():
+            # Save current input from other widget
+            setattr(self, save_var, widget_to_hide.get())
+
+            # Restore and show target widget
+            widget_to_show.delete(0, tk.END)
+            widget_to_show.insert(0, getattr(self, restore_var))
+            widget_to_show.grid()
+
+        # Hide other widget if visible
+        if widget_to_hide.winfo_viewable():
+            widget_to_hide.grid_remove()
 
     def _update_hash_type_visibility(self) -> None:
         """
@@ -753,40 +788,13 @@ class QueryGeneratorGUI:
 
         is_hash_type = self.current_type == "hash"
 
+        # Check for valid hash type
         if is_hash_type:
-            self.hash_type_combobox.grid() 
-            self.hash_type_label.grid()     
+            self.hash_type_combobox.grid()
+            self.hash_type_label.grid()
         else:
             self.hash_type_combobox.grid_remove()
             self.hash_type_label.grid_remove()
-
-    def get_supported_hash_types(self, mode: str) -> List[str]:
-        """
-        Get supported hash types for a specific mode.
-
-        Args:
-        - mode (str): Query mode (e.g., 'aql', 'es', 'defender')
-
-        Returns:
-        - List[str]: List of supported hash types for the mode
-        """
-
-        return PLATFORM_HASH_TYPES.get(mode.lower(), SUPPORTED_HASH_TYPES)
-
-    def get_default_hash_type(self, mode: str) -> str:
-        """
-        Get default hash type for a specific mode.
-
-        Args:
-        - mode (str): Query mode
-
-        Returns:
-        - str: Default hash type for the mode
-
-        """
-        supported_types = get_supported_hash_types(mode)
-
-        return supported_types[0] if supported_types else DEFAULT_HASH_TYPE
 
     def _update_hash_types_for_mode(self, mode: str) -> None:
         """
@@ -796,18 +804,15 @@ class QueryGeneratorGUI:
         - mode (str): Current mode selection
         """
 
-        # Get supported hash types for this mode
+        # Get supported types
         supported_types = get_supported_hash_types(mode)
         self.hash_type_combobox['values'] = supported_types
 
-        # Set default hash type if current selection is not supported
         current_hash_type = self.current_hash_type
-        if current_hash_type not in supported_types:
-            default_type = get_default_hash_type(mode)
-            self.hash_type_var.set(default_type)
 
-        # If current type is still valid
-        elif current_hash_type in supported_types:
+        if current_hash_type not in supported_types:
+            self.hash_type_var.set(DEFAULT_HASH_TYPE)
+        else:
             self.hash_type_var.set(current_hash_type)
 
     # =========================================================================
@@ -820,6 +825,7 @@ class QueryGeneratorGUI:
         """
 
         text = self.output_text.get("1.0", tk.END).strip()
+
         if text:
             self.root.clipboard_clear()
             self.root.clipboard_append(text)
