@@ -21,18 +21,19 @@ Generate queries based on provided platform 'aql', 'elastic' or 'defender
 # =============================================================================
 
 # Supported types and formats
-SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256"]
+SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256", "filehash"]
 SUPPORTED_ITEM_TYPES = ["ip", "domain", "hash"]
 SUPPORTED_MODES = ["aql", "es", "defender"]
 
 # AQL Platform Field Mappings
 AQL_FIELDS = {
-    "ip": "source ip",
-    "domain": "url domain",
+    "ip": "sourceip",
+    "domain": "\"URL Domain\"",
     "hash": {
-        "md5": "md5 hash",
-        "sha1": "sha1 hash",
-        "sha256": "sha256 hash"
+        "filehash": "\"File Hash\"",
+        "md5": "\"MD5 Hash\"",
+        "sha1": "\"SHA1 Hash\"",
+        "sha256": "\"SHA256 Hash\""
     }
 }
 
