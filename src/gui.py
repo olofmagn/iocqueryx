@@ -84,7 +84,7 @@ DEFAULT_HASH_TYPE = "sha256"
 # Supported Options
 SUPPORTED_MODES = ["aql", "es", "defender"]
 SUPPORTED_TYPES = ["ip", "domain", "hash"]
-SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256"]
+SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256", "filehash"]
 
 # UI Text Constants
 COPYRIGHT_TEXT = "© 2025 olofmagn"

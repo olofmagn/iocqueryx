@@ -24,7 +24,7 @@ LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 # Supported Values
 SUPPORTED_MODES = ["aql", "es", "defender"]
 SUPPORTED_TYPES = ["ip", "domain", "hash"]
-SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256"]
+SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256", "filehash"]
 
 # Default Values
 DEFAULT_HASH_TYPE = "sha256"
