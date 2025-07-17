@@ -20,50 +20,32 @@ from utils.configuration import (
 )
 
 from utils.ui_constants import (
-    # Window Configuration
     DEFAULT_WINDOW_WIDTH,
     DEFAULT_WINDOW_HEIGHT,
     DEFAULT_OUTPUT_HEIGHT,
-    WINDOW_TITLE,
-    WINDOW_PADDING,
-
-    # Default Values
-    DEFAULT_MODE,
+    DEFAULT_HASH_TYPE,
     DEFAULT_TYPE,
     DEFAULT_TIME_RANGE_INDEX,
-
-    # Widget Styling Constants
+    DEFAULT_MODE,
+    WINDOW_TITLE,
+    WINDOW_PADDING,
     WIDGET_PADDING_X,
     WIDGET_PADDING_Y,
     TIME_ENTRY_WIDTH,
     ARROW_BUTTON_WIDTH,
     ARROW_BUTTON_PADDING,
-
-    # Grid Positioning Constants
     GRID_STICKY_WEST,
     GRID_STICKY_EAST,
     GRID_STICKY_NSEW,
     GRID_STICKY_E,
-
-    # Time Range Configuration
     TIME_RANGES,
-
-    # Mode Configuration
     MODE_CONFIGS,
-
-    # UI Text Constants
     COPYRIGHT_TEXT,
     COPYRIGHT_FONT,
     COPYRIGHT_COLOR,
-
-    # Supported Values
     SUPPORTED_MODES,
     SUPPORTED_TYPES,
     SUPPORTED_HASH_TYPES,
-
-    # Hash Type Configuration
-    DEFAULT_HASH_TYPE,
-
 )
 
 

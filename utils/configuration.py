@@ -13,31 +13,20 @@ import logging
 from typing import Optional, List, Tuple
 
 from utils.ui_constants import (
-    # Application Configuration
     DEFAULT_LOGGER_NAME,
     DEFAULT_LOG_LEVEL,
-    LOG_FORMAT,
     DEFAULT_ENCODING,
-
-    # Supported Values
+    DEFAULT_HASH_TYPE,
+    FIRST_COLUMN_INDEX,
+    LOG_FORMAT,
     SUPPORTED_MODES,
     SUPPORTED_TYPES,
     SUPPORTED_HASH_TYPES,
-
-    # Hash Type Configuration
-    DEFAULT_HASH_TYPE,
-    PLATFORM_HASH_TYPES,
-
-    # Time Unit Mappings
     TIME_UNIT_PATTERNS,
-    DEFENDER_ES_PLATFORMS,
-
-    # Regex Patterns
+    PLATFORM_HASH_TYPES,
     LOOKBACK_PATTERN,
-
-    # File Processing Configuration
+    DEFENDER_ES_PLATFORMS,
     CSV_DELIMITER,
-    FIRST_COLUMN_INDEX,
 )
 
 
