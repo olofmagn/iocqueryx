@@ -12,52 +12,33 @@ import logging
 
 from typing import Optional, List, Tuple
 
-# =============================================================================
-# CONSTANTS AND CONFIGURATION
-# =============================================================================
+from utils.ui_constants import (
+    # Application Configuration
+    DEFAULT_LOGGER_NAME,
+    DEFAULT_LOG_LEVEL,
+    LOG_FORMAT,
+    DEFAULT_ENCODING,
 
-# Application Configuration
-DEFAULT_LOGGER_NAME = "IocQueryx"
-DEFAULT_LOG_LEVEL = logging.INFO
-LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
-DEFAULT_ENCODING = "utf-8"
+    # Supported Values
+    SUPPORTED_MODES,
+    SUPPORTED_TYPES,
+    SUPPORTED_HASH_TYPES,
 
-# Supported Values
-SUPPORTED_MODES = ["aql", "es", "defender"]
-SUPPORTED_TYPES = ["ip", "domain", "hash"]
-SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256", "filehash"]
+    # Hash Type Configuration
+    DEFAULT_HASH_TYPE,
+    PLATFORM_HASH_TYPES,
 
-SUPPORTED_ITEM_TYPES = ["ip", "domain", "hash"]
+    # Time Unit Mappings
+    TIME_UNIT_PATTERNS,
+    DEFENDER_ES_PLATFORMS,
 
-# Hash Type Configuration
-STANDARD_HASH_TYPES = ["md5", "sha1", "sha256"]
-AQL_HASH_TYPES = STANDARD_HASH_TYPES + ["filehash"]
-DEFAULT_HASH_TYPE = "sha256"
+    # Regex Patterns
+    LOOKBACK_PATTERN,
 
-# Platform-Specific Hash Types
-PLATFORM_HASH_TYPES = {
-    "aql": AQL_HASH_TYPES,
-    "es": STANDARD_HASH_TYPES,
-    "defender": STANDARD_HASH_TYPES
-}
-
-# Time Unit Mappings
-TIME_UNIT_PATTERNS = {
-    "minutes": ["minute", "minutes", "min", "m"],
-    "hours": ["hour", "hours", "h"],
-    "days": ["day", "days", "d"]
-}
-
-# Platform-specific time formats
-DEFENDER_ES_PLATFORMS = ["defender", "es"]
-AQL_PLATFORM = "aql"
-
-# Regex Patterns
-LOOKBACK_PATTERN = r"(\d+)\s*(minutes?|hours?|days?|min|m|h|d)"
-
-# File Processing Configuration
-CSV_DELIMITER = ","
-FIRST_COLUMN_INDEX = 0
+    # File Processing Configuration
+    CSV_DELIMITER,
+    FIRST_COLUMN_INDEX,
+)
 
 
 # =============================================================================

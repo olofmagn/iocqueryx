@@ -14,11 +14,14 @@ from .configuration import (
     extract_items,
     build_conditions,
     normalize_lookback,
-    SUPPORTED_MODES,
-    SUPPORTED_ITEM_TYPES,
-    SUPPORTED_HASH_TYPES,
+)
+
+from utils.ui_constants import (
+    DEFAULT_HASH_TYPE,
     PLATFORM_HASH_TYPES,
-    DEFAULT_HASH_TYPE
+    SUPPORTED_HASH_TYPES,
+    SUPPORTED_MODES,
+    SUPPORTED_ITEM_TYPES
 )
 
 """

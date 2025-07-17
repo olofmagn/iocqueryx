@@ -17,78 +17,54 @@ from utils.configuration import (
     get_logger,
     get_supported_hash_types,
     normalize_lookback,
-    SUPPORTED_MODES,
-    SUPPORTED_ITEM_TYPES as SUPPORTED_TYPES,
-    SUPPORTED_HASH_TYPES,
-    DEFAULT_HASH_TYPE
 )
 
-# =============================================================================
-# CONSTANTS AND CONFIGURATION
-# =============================================================================
+from utils.ui_constants import (
+    # Window Configuration
+    DEFAULT_WINDOW_WIDTH,
+    DEFAULT_WINDOW_HEIGHT,
+    DEFAULT_OUTPUT_HEIGHT,
+    WINDOW_TITLE,
+    WINDOW_PADDING,
 
-# Window Configuration
-DEFAULT_WINDOW_WIDTH = 500
-DEFAULT_WINDOW_HEIGHT = 400
-DEFAULT_OUTPUT_HEIGHT = 10
-WINDOW_TITLE = "IocQueryX - IOC Hunting Query Generator"
-WINDOW_PADDING = 10
+    # Default Values
+    DEFAULT_MODE,
+    DEFAULT_TYPE,
+    DEFAULT_TIME_RANGE_INDEX,
 
-# Default Values
-DEFAULT_MODE = "aql"
-DEFAULT_TYPE = "ip"
-DEFAULT_TIME_RANGE_INDEX = 1  # "10 MINUTES"
+    # Widget Styling Constants
+    WIDGET_PADDING_X,
+    WIDGET_PADDING_Y,
+    TIME_ENTRY_WIDTH,
+    ARROW_BUTTON_WIDTH,
+    ARROW_BUTTON_PADDING,
 
-# Widget Styling Constants
-WIDGET_PADDING_X = 2
-WIDGET_PADDING_Y = 2
-TIME_ENTRY_WIDTH = 15
-ARROW_BUTTON_WIDTH = 2
-ARROW_BUTTON_PADDING = (6, 0)
+    # Grid Positioning Constants
+    GRID_STICKY_WEST,
+    GRID_STICKY_EAST,
+    GRID_STICKY_NSEW,
+    GRID_STICKY_E,
 
-# Grid Positioning Constants
-GRID_STICKY_WEST = "w"
-GRID_STICKY_EAST = "ew"
-GRID_STICKY_NSEW = "nsew"
-GRID_STICKY_E = "e"
+    # Time Range Configuration
+    TIME_RANGES,
 
-# Time Range Configuration
-TIME_RANGES = [
-    ("5m", "5 MINUTES"),
-    ("10m", "10 MINUTES"),
-    ("30m", "30 MINUTES"),
-    ("1h", "1 HOUR"),
-    ("3h", "3 HOURS"),
-    ("12h", "12 HOURS"),
-    ("1d", "1 DAY")
-]
+    # Mode Configuration
+    MODE_CONFIGS,
 
-# Mode Configuration
-MODE_CONFIGS = {
-    "aql": {
-        "info": "Using AQL Search query mode",
-        "label": "QID:",
-        "show_qid": True,
-        "show_ea": False
-    },
-    "es": {
-        "info": "Using Elastic Search query mode",
-        "label": "EA:",
-        "show_qid": False,
-        "show_ea": True
-    },
-    "defender": {
-        "info": "Using Defender Search query mode",
-        "label": "",
-        "show_qid": False,
-        "show_ea": False
-    }
-}
+    # UI Text Constants
+    COPYRIGHT_TEXT,
+    COPYRIGHT_FONT,
+    COPYRIGHT_COLOR,
 
-# UI Text Constants
-COPYRIGHT_TEXT = "© 2025 olofmagn"
-COPYRIGHT_FONT = ("Segoe UI", 8, "italic")
-COPYRIGHT_COLOR = "gray50"
+    # Supported Values
+    SUPPORTED_MODES,
+    SUPPORTED_TYPES,
+    SUPPORTED_HASH_TYPES,
+
+    # Hash Type Configuration
+    DEFAULT_HASH_TYPE,
+
+)
 
 
 # =============================================================================
@@ -291,6 +267,7 @@ def extend_arguments_for_mode(base_args: List[str], mode: str, qids: List[str] =
             if eas:
                 args.extend(["-ea"] + eas)
     return args
+
 
 # =============================================================================
 # MAIN GUI CLASS
