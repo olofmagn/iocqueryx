@@ -47,7 +47,7 @@ ELASTIC_FIELDS = {
 }
 
 # Microsoft Defender Platform Configuration
-DEFENDER_CONFIG = { 
+DEFENDER_FIELDS = { 
     "ip": {
         "field": "RemoteIP",
         "table": "DeviceNetworkEvents"
