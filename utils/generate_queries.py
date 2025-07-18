@@ -225,7 +225,7 @@ def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int
 
     # Construct final query
     if qid_condition:
-        query = f"SELECT * from events where ({conditions}) AND ({qid_condition}) LAST {lookback}"
+        query = f"SELECT * from events where ({conditions}) and ({qid_condition}) LAST {lookback}"
     else:
         query = f"SELECT * from events where ({conditions}) LAST {lookback}"
     return query

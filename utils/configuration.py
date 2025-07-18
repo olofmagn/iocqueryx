@@ -149,6 +149,7 @@ def get_supported_hash_types(mode: str) -> List[str]:
     Returns:
     - List[str]: List of supported hash types for the mode
     """
+
     return PLATFORM_HASH_TYPES.get(mode.lower(), SUPPORTED_HASH_TYPES)
 
 
