@@ -6,7 +6,6 @@ Date: 2025-07-02
 """
 
 import re
-import sys
 import argparse
 import logging
 
@@ -73,39 +72,52 @@ logger = create_module_logger()
 # FILE PROCESSING UTILITIES
 # =============================================================================
 
-def validate_file_path(file_path: str) -> bool:
-    """
-    Validate file path
-    
-    Args:
-    - file_path (str): Path to validate
-
-    Returns:
-    - bool: True if file path is valid string
-    """
-
-    return bool(file_path and file_path.strip())
-
-
 def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[str]:
     """
     Read file lines.
 
     Args:
-    - file_path (str): Path to the file to read
+    - file_path (str): File path to read
     - encoding (str): File encoding (default: utf-8)
 
     Returns:
     - List[str]: List of non-empty lines from the file
     """
 
+    # Validate input at the point of use
+    if not file_path or not file_path.strip():
+        raise ValueError("File path cannot be empty")
+
     try:
         with open(file_path, 'r', encoding=encoding) as f:
-            return [line.strip() for line in f if line.strip()]
+            lines = [line.strip() for line in f if line.strip()]
+        if not lines:
+            raise ValueError(f"File {file_path} is empty or contains no valid data")
+        return lines
     except FileNotFoundError:
-        raise ValueError(f"No valid file provided. Check filepath: {file_path}.")
-    except IOError:
-        raise ValueError(f"No valid file provided. Check filepath: {file_path}.")
+        raise ValueError(f"File not found: {file_path}")
+    except PermissionError:
+        raise ValueError(f"Permission denied reading file: {file_path}")
+    except UnicodeDecodeError:
+        raise ValueError(f"Cannot decode file {file_path} with encoding {encoding}")
+    except IOError as e:
+        raise ValueError(f"Error reading file {file_path}: {e}")
+
+
+def extract_items(file_path: str) -> List[str]:
+    """
+    Extract items
+
+    Args:
+    - file_path (str): Path to the input file containing a list of items
+
+    Returns:
+    - List[str]: List containing only the first column from each non-empty line
+    """
+
+    lines = read_file_lines(file_path)
+
+    return [extract_first_column(line) for line in lines]
 
 
 def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
@@ -121,26 +133,6 @@ def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
     """
 
     return line.split(delimiter)[FIRST_COLUMN_INDEX]
-
-
-def extract_items(input_file: str) -> List[str]:
-    """
-    Extract items
-
-    Args:
-    - input_file (str): Path to the input file containing a list of items
-
-    Returns:
-    - List[str]: List containing only the first column from each non-empty line
-    """
-
-    if not validate_file_path(input_file):
-        logger.error("Invalid file path provided")
-        sys.exit(1)
-
-    lines = read_file_lines(input_file)
-
-    return [extract_first_column(line) for line in lines]
 
 
 # =============================================================================
