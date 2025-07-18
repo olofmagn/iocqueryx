@@ -104,7 +104,8 @@ d41d8cd98f00b204e9800998ecf8427e, Sweden --> hash
 └── utils
     ├── configuration.py
     ├── generate_queries.py
-    └── __init__.py
+    ├── __init__.py
+    └── ui_constants.py
 ```
 
 ## Requirements
@@ -149,17 +150,17 @@ Example usage of an input file of type: `ip`, mode: `aql` and `qid`.
 
 ### CLI
 ```python3
-python3 -m src.main -i sample.txt -m aql -t ip -q 20257872
+python3 -m src.main -i sample.txt -m aql -t ip -q 20257872 -l 10m
 ```
 
 Elastic Query (Hashes):
 ```python3
-python3 -m src.main -i sample.txt -m es -t hash -ht sha1
+python3 -m src.main -i sample.txt -m es -t hash -ht sha1 -l 10m
 ```
 
 Defender Query (Domains):
 ```python3
-python3 -m src.main -i sample.txt -m defender -t domain
+python3 -m src.main -i sample.txt -m defender -t domain -l 10m
 ```
 
 ## License
