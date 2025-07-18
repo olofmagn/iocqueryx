@@ -14,11 +14,15 @@ from .configuration import (
     extract_items,
     build_conditions,
     normalize_lookback,
-    SUPPORTED_MODES,
-    SUPPORTED_ITEM_TYPES,
-    SUPPORTED_HASH_TYPES,
+)
+
+from utils.ui_constants import (
+    DEFAULT_HASH_TYPE,
     PLATFORM_HASH_TYPES,
-    DEFAULT_HASH_TYPE
+    SUPPORTED_HASH_TYPES,
+    SUPPORTED_MODES,
+    SUPPORTED_ITEM_TYPES
+
 )
 
 """
@@ -221,7 +225,7 @@ def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int
 
     # Construct final query
     if qid_condition:
-        query = f"SELECT * from events where ({conditions}) AND ({qid_condition}) LAST {lookback}"
+        query = f"SELECT * from events where ({conditions}) and ({qid_condition}) LAST {lookback}"
     else:
         query = f"SELECT * from events where ({conditions}) LAST {lookback}"
     return query
@@ -287,6 +291,88 @@ def generate_defender_query(items: List[str], item_type: str, hash_type: str = "
 # MAIN QUERY GENERATION ORCHESTRATOR
 # =============================================================================
 
+
+def _validate_required_attr(args, attr_name):
+    """
+    Validate that a required attribute exists and has a value
+
+    Args:
+    - args (List[Any]): List of arguments
+    - attr_name (str): Attribute name
+    """
+
+    if not getattr(args, attr_name):
+        raise ValueError(f"{attr_name} is required")
+
+
+def _validate_supported_value(args, attr_name, supported_values):
+    """
+    Validate that an attribute value is in the supported list.
+
+    Args:
+    - args (List[Any]): List of arguments
+    - attr_name (str): Attribute name
+    - supported_values (List[Any]): List of supported values
+    """
+
+    if getattr(args, attr_name).lower() not in supported_values:
+        raise ValueError(
+            f"Unsupported {attr_name}: Must be one of: {supported_values}")
+
+
+def _validate_and_setup_args(args):
+    """
+    Validate arguments and setup defaults.
+
+    Args:
+    - args (List[Any]): List of arguments
+    """
+
+    # Validate required attributes
+    _validate_required_attr(args, 'input')
+    _validate_required_attr(args, 'lookback')
+    _validate_required_attr(args, 'mode')
+    _validate_required_attr(args, 'type')
+
+    # Validate supported values
+    _validate_supported_value(args, 'mode', SUPPORTED_MODES)
+    _validate_supported_value(args, 'type', SUPPORTED_ITEM_TYPES)
+
+    # Handle hash type validation and defaults
+    if args.type.lower() == "hash":
+        if not getattr(args, 'hash_type') or not args.hash_type:
+            args.hash_type = DEFAULT_HASH_TYPE
+        else:
+            supported_hash_types = PLATFORM_HASH_TYPES.get(args.mode.lower(), SUPPORTED_HASH_TYPES)
+            if args.hash_type.lower() not in supported_hash_types:
+                raise ValueError(
+                    f"Unsupported hash_type: {args.hash_type} for {args.mode}. "
+                    f"Must be one of: {supported_hash_types}")
+
+
+def _generate_platform_query(args, items, lookback):
+    """
+    Generate query based on the specified platform/mode.
+
+    Args:
+    - args (List[Any]): List of arguments
+    - items (List[str]): A list of items e.g., ip, domains or hashes.
+    - lookback (str): Time range for the query.
+    """
+
+    match args.mode.lower():
+        case "aql":
+            qid_list = getattr(args, 'qid', [])
+            return generate_aql_query(items, args.type, qid_list, args.hash_type, lookback=lookback)
+        case "es":
+            event_actions = getattr(args, 'event_action', [])
+            return generate_elastic_query(items, args.type, event_actions, args.hash_type, lookback=lookback)
+        case "defender":
+            return generate_defender_query(items, args.type, args.hash_type, lookback=lookback)
+        case _:
+            raise ValueError(f"Unsupported mode: {args.mode}. Supported modes: {SUPPORTED_MODES}")
+
+
 def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=None) -> str:
     """
     Generate query from args
@@ -302,46 +388,18 @@ def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=
     if parser is None:
         parser = create_parser()
 
-    # If args is a list of command arguments, parse them
+    # Parse arguments if needed
     if isinstance(args, list):
         try:
             args = parser.parse_args(args)
         except SystemExit as e:
             raise ValueError(f"Failed to parse arguments: {e}")
 
-    # Validate required arguments
-    if not hasattr(args, 'input') or not args.input:
-        raise ValueError("Input file is required")
-
-    if not hasattr(args, 'lookback') or not args.lookback:
-        raise ValueError("Lookback time is required")
-
-    if not hasattr(args, 'mode') or not args.mode:
-        raise ValueError("Mode is required")
-
-    if not hasattr(args, 'type') or not args.type:
-        raise ValueError("Type is required")
-
-    # Validate mode and type values
-    if args.mode.lower() not in SUPPORTED_MODES:
-        raise ValueError(f"Unsupported mode: {args.mode}. Must be one of: {SUPPORTED_MODES}")
-
-    if args.type.lower() not in SUPPORTED_ITEM_TYPES:
-        raise ValueError(f"Unsupported type: {args.type}. Must be one of: {SUPPORTED_ITEM_TYPES}")
-
-    # Validate hash type if needed
-    if args.type.lower() == "hash":
-        if not hasattr(args, 'hash_type') or not args.hash_type:
-            args.hash_type = DEFAULT_HASH_TYPE  # Default
-        else:
-            supported_hash_types = PLATFORM_HASH_TYPES.get(args.mode.lower(), SUPPORTED_HASH_TYPES)
-            if args.hash_type.lower() not in supported_hash_types:
-                raise ValueError(
-                    f"Unsupported hash_type: {args.hash_type} for {args.mode}. Must be one of: {supported_hash_types}")
+    # Validate and setup arguments
+    _validate_and_setup_args(args)
 
     # Extract items from input file
     items = extract_items(args.input)
-
     if not items:
         raise ValueError(f"No valid items found in input file: {args.input}")
 
@@ -350,80 +408,10 @@ def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=
         lookback = normalize_lookback(args.lookback, args.mode)
         if lookback is None:
             raise ValueError(
-                f"Invalid lookback format: '{args.lookback}'. Valid formats: 5m, 10m, 30m, 1h, 3h, 12h, 1d")
+                f"Invalid lookback format: '{args.lookback}'. "
+                f"Valid formats: 5m, 10m, 30m, 1h, 3h, 12h, 1d")
     except Exception as e:
         raise ValueError(f"Failed to normalize lookback time: {e}")
 
-    # Generate query based on mode
-    match args.mode.lower():
-        case "aql":
-            qid_list = getattr(args, 'qid', [])
-            return generate_aql_query(items, args.type, qid_list, args.hash_type, lookback=lookback)
-        case "es":
-            event_actions = getattr(args, 'event_action', [])
-            return generate_elastic_query(items, args.type, event_actions, args.hash_type, lookback=lookback)
-        case "defender":
-            return generate_defender_query(items, args.type, args.hash_type, lookback=lookback)
-        case _:
-            raise ValueError(f"Unsupported mode: {args.mode}. Supported modes: {SUPPORTED_MODES}")
-
-
-# =============================================================================
-# UTILITY FUNCTIONS
-# =============================================================================
-
-def validate_query_parameters(item_type: str, mode: str, hash_type: str = "sha256") -> None:
-    """
-    Validate query parameters
-
-    Args:
-    - item_type (str): Type of item to validate
-    - mode (str): Platform mode to validate
-    - hash_type (str): Hash type to validate (default: sha256)
-    """
-
-    if item_type not in SUPPORTED_ITEM_TYPES:
-        raise ValueError(f"Unsupported item_type: {item_type}. Must be one of: {SUPPORTED_ITEM_TYPES}")
-
-    if mode not in SUPPORTED_MODES:
-        raise ValueError(f"Unsupported mode: {mode}. Must be one of: {SUPPORTED_MODES}")
-
-    if item_type == "hash" and hash_type.lower() not in SUPPORTED_HASH_TYPES:
-        raise ValueError(f"Unsupported hash_type: {hash_type}. Must be one of: {SUPPORTED_HASH_TYPES}")
-
-
-def get_supported_combinations() -> Dict[str, List[str]]:
-    """
-    Get supported combinations
-
-    Returns:
-    - Dict[str, List[str]]: Dictionary of all supported configuration combinations
-    """
-
-    return {
-        "modes": SUPPORTED_MODES,
-        "item_types": SUPPORTED_ITEM_TYPES,
-        "hash_types": SUPPORTED_HASH_TYPES
-    }
-
-
-def get_field_mapping_for_mode(mode: str) -> Dict:
-    """
-    Get field mappings
-
-    Args:
-    - mode (str): Platform mode (aql, es, defender)
-
-    Returns:
-    - Dict: Field mapping configuration for the specified mode
-    """
-
-    match mode.lower():
-        case "aql":
-            return AQL_FIELDS
-        case "es":
-            return ELASTIC_FIELDS
-        case "defender":
-            return DEFENDER_FIELDS
-        case _:
-            raise ValueError(f"Unsupported mode: {mode}. Must be one of: {SUPPORTED_MODES}")
+    # Generate and return the query
+    return _generate_platform_query(args, items, lookback)

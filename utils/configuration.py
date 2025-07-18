@@ -6,58 +6,27 @@ Date: 2025-07-02
 """
 
 import re
-import sys
 import argparse
 import logging
 
 from typing import Optional, List, Tuple
 
-# =============================================================================
-# CONSTANTS AND CONFIGURATION
-# =============================================================================
-
-# Application Configuration
-DEFAULT_LOGGER_NAME = "IocQueryx"
-DEFAULT_LOG_LEVEL = logging.INFO
-LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
-DEFAULT_ENCODING = "utf-8"
-
-# Supported Values
-SUPPORTED_MODES = ["aql", "es", "defender"]
-SUPPORTED_TYPES = ["ip", "domain", "hash"]
-SUPPORTED_HASH_TYPES = ["md5", "sha1", "sha256", "filehash"]
-
-SUPPORTED_ITEM_TYPES = ["ip", "domain", "hash"]
-
-# Hash Type Configuration
-STANDARD_HASH_TYPES = ["md5", "sha1", "sha256"]
-AQL_HASH_TYPES = STANDARD_HASH_TYPES + ["filehash"]
-DEFAULT_HASH_TYPE = "sha256"
-
-# Platform-Specific Hash Types
-PLATFORM_HASH_TYPES = {
-    "aql": AQL_HASH_TYPES,
-    "es": STANDARD_HASH_TYPES,
-    "defender": STANDARD_HASH_TYPES
-}
-
-# Time Unit Mappings
-TIME_UNIT_PATTERNS = {
-    "minutes": ["minute", "minutes", "min", "m"],
-    "hours": ["hour", "hours", "h"],
-    "days": ["day", "days", "d"]
-}
-
-# Platform-specific time formats
-DEFENDER_ES_PLATFORMS = ["defender", "es"]
-AQL_PLATFORM = "aql"
-
-# Regex Patterns
-LOOKBACK_PATTERN = r"(\d+)\s*(minutes?|hours?|days?|min|m|h|d)"
-
-# File Processing Configuration
-CSV_DELIMITER = ","
-FIRST_COLUMN_INDEX = 0
+from utils.ui_constants import (
+    DEFAULT_LOGGER_NAME,
+    DEFAULT_LOG_LEVEL,
+    DEFAULT_ENCODING,
+    DEFAULT_HASH_TYPE,
+    FIRST_COLUMN_INDEX,
+    LOG_FORMAT,
+    SUPPORTED_MODES,
+    SUPPORTED_TYPES,
+    SUPPORTED_HASH_TYPES,
+    TIME_UNIT_PATTERNS,
+    PLATFORM_HASH_TYPES,
+    LOOKBACK_PATTERN,
+    DEFENDER_ES_PLATFORMS,
+    CSV_DELIMITER,
+)
 
 
 # =============================================================================
@@ -103,39 +72,52 @@ logger = create_module_logger()
 # FILE PROCESSING UTILITIES
 # =============================================================================
 
-def validate_file_path(file_path: str) -> bool:
-    """
-    Validate file path
-    
-    Args:
-    - file_path (str): Path to validate
-
-    Returns:
-    - bool: True if file path is valid string
-    """
-
-    return bool(file_path and file_path.strip())
-
-
 def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[str]:
     """
     Read file lines.
 
     Args:
-    - file_path (str): Path to the file to read
+    - file_path (str): File path to read
     - encoding (str): File encoding (default: utf-8)
 
     Returns:
     - List[str]: List of non-empty lines from the file
     """
 
+    # Validate input at the point of use
+    if not file_path or not file_path.strip():
+        raise ValueError("File path cannot be empty")
+
     try:
         with open(file_path, 'r', encoding=encoding) as f:
-            return [line.strip() for line in f if line.strip()]
+            lines = [line.strip() for line in f if line.strip()]
+        if not lines:
+            raise ValueError(f"File {file_path} is empty or contains no valid data")
+        return lines
     except FileNotFoundError:
-        raise ValueError(f"No valid file provided. Check filepath: {file_path}.")
-    except IOError:
-        raise ValueError(f"No valid file provided. Check filepath: {file_path}.")
+        raise ValueError(f"File not found: {file_path}")
+    except PermissionError:
+        raise ValueError(f"Permission denied reading file: {file_path}")
+    except UnicodeDecodeError:
+        raise ValueError(f"Cannot decode file {file_path} with encoding {encoding}")
+    except IOError as e:
+        raise ValueError(f"Error reading file {file_path}: {e}")
+
+
+def extract_items(file_path: str) -> List[str]:
+    """
+    Extract items
+
+    Args:
+    - file_path (str): Path to the input file containing a list of items
+
+    Returns:
+    - List[str]: List containing only the first column from each non-empty line
+    """
+
+    lines = read_file_lines(file_path)
+
+    return [extract_first_column(line) for line in lines]
 
 
 def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
@@ -153,26 +135,6 @@ def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
     return line.split(delimiter)[FIRST_COLUMN_INDEX]
 
 
-def extract_items(input_file: str) -> List[str]:
-    """
-    Extract items
-
-    Args:
-    - input_file (str): Path to the input file containing a list of items
-
-    Returns:
-    - List[str]: List containing only the first column from each non-empty line
-    """
-
-    if not validate_file_path(input_file):
-        logger.error("Invalid file path provided")
-        sys.exit(1)
-
-    lines = read_file_lines(input_file)
-
-    return [extract_first_column(line) for line in lines]
-
-
 # =============================================================================
 # QUERY CONDITION UTILITIES
 # =============================================================================
@@ -187,6 +149,7 @@ def get_supported_hash_types(mode: str) -> List[str]:
     Returns:
     - List[str]: List of supported hash types for the mode
     """
+
     return PLATFORM_HASH_TYPES.get(mode.lower(), SUPPORTED_HASH_TYPES)
 
 
@@ -461,73 +424,3 @@ def create_parser() -> argparse.ArgumentParser:
     add_optional_arguments(parser)
 
     return parser
-
-
-# =============================================================================
-# VALIDATION UTILITIES
-# =============================================================================
-
-def validate_mode(mode: str) -> bool:
-    """
-    Validate mode
-
-    Args:
-    - mode (str): Mode to validate
-
-    Returns:
-    - bool: True if mode is supported
-    """
-
-    return mode.lower() in SUPPORTED_MODES
-
-
-def validate_type(item_type: str) -> bool:
-    """
-    Validate type
-
-    Args:
-    - item_type (str): Type to validate
-
-    Returns:
-    - bool: True if type is supported
-    """
-
-    return item_type.lower() in SUPPORTED_TYPES
-
-
-def validate_hash_type(hash_type: str) -> bool:
-    """
-    Validate hash type
-
-    Args:
-    - hash_type (str): Hash type to validate
-
-    Returns:
-    - bool: True if hash type is supported
-    """
-
-    return hash_type.lower() in SUPPORTED_HASH_TYPES
-
-
-def validate_configuration_parameters(mode: str, item_type: str, hash_type: str = None) -> Tuple[bool, str]:
-    """
-    Validate configuration parameters
-
-    Args:
-    - mode (str): Mode to validate
-    - item_type (str): Type to validate
-    - hash_type (str): Hash type to validate (optional)
-
-    Returns:
-    - Tuple[bool, str]: (is_valid, error_message)
-    """
-
-    if not validate_mode(mode):
-        return False, f"Unsupported mode: {mode}. Must be one of: {SUPPORTED_MODES}"
-
-    if not validate_type(item_type):
-        return False, f"Unsupported type: {item_type}. Must be one of: {SUPPORTED_TYPES}"
-
-    if item_type.lower() == "hash" and hash_type and not validate_hash_type(hash_type):
-        return False, f"Unsupported hash type: {hash_type}. Must be one of: {SUPPORTED_HASH_TYPES}"
-    return True, ""
