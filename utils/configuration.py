@@ -413,6 +413,10 @@ def add_optional_arguments(parser: argparse.ArgumentParser) -> None:
                         type=str,
                         help="Optional file to save query")
 
+    parser.add_argument("-p", "--project",
+                        action="store_true",
+                        help="Apply field projection for Defender queries")
+
 
 def create_parser() -> argparse.ArgumentParser:
     """

@@ -10,6 +10,7 @@ DEFAULT_WINDOW_HEIGHT = 400
 DEFAULT_OUTPUT_HEIGHT = 10
 WINDOW_TITLE = "IocQueryX - IOC Hunting Query Generator"
 WINDOW_PADDING = 10
+FRAME_SIZE_MINIMUM = 100
 
 # Default Values
 DEFAULT_MODE = "aql"
@@ -17,6 +18,7 @@ DEFAULT_TYPE = "ip"
 DEFAULT_TIME_RANGE_INDEX = 1  # "10 MINUTES"
 
 # Widget Styling Constants
+DEFAULT_PADDING = 10
 WIDGET_PADDING_X = 2
 WIDGET_PADDING_Y = 2
 TIME_ENTRY_WIDTH = 15
@@ -58,7 +60,8 @@ MODE_CONFIGS = {
         "info": "Using Defender Search query mode",
         "label": "",
         "show_qid": False,
-        "show_ea": False
+        "show_ea": False,
+        "show_projection": True
     }
 }
 

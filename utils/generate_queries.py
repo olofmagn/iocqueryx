@@ -6,15 +6,7 @@ Date: 2025-07-02
 """
 
 import argparse
-
 from typing import List, Optional, Union, Dict
-
-from .configuration import (
-    create_parser,
-    extract_items,
-    build_conditions,
-    normalize_lookback,
-)
 
 from utils.ui_constants import (
     DEFAULT_HASH_TYPE,
@@ -23,6 +15,12 @@ from utils.ui_constants import (
     SUPPORTED_MODES,
     SUPPORTED_ITEM_TYPES
 
+)
+from .configuration import (
+    create_parser,
+    extract_items,
+    build_conditions,
+    normalize_lookback,
 )
 
 """
@@ -263,7 +261,8 @@ def generate_elastic_query(items: List[str], item_type: str, event_actions: Opti
     return query
 
 
-def generate_defender_query(items: List[str], item_type: str, hash_type: str = "sha256", lookback: str = None) -> str:
+def _generate_defender_query(items: List[str], item_type: str, hash_type: str = "sha256", lookback: str = None,
+                            include_project: bool = False) -> str:
     """
     Generate defender query
 
@@ -282,9 +281,42 @@ def generate_defender_query(items: List[str], item_type: str, hash_type: str = "
     table = config["table"]
 
     conditions = " or ".join([f"{field} contains '{item}'" for item in items])
+    query = f"{table} \n | where {conditions} \n | where Timestamp > ago({lookback})"
 
-    # Construct final query
-    return f"{table} \n | where {conditions} \n | where Timestamp > ago({lookback})"
+    if include_project:
+        project_fields = _get_defender_project_fields(item_type, hash_type)
+        if project_fields:
+            fields_str = ", ".join(project_fields)
+            query += f"\n | project {fields_str}"
+
+    return query
+
+
+def _get_defender_project_fields(item_type: str, hash_type: str = None) -> List[str]:
+    """
+    Get appropriate fields to project based on query type
+
+    Args:
+    - item_type (str): 'ip', 'domain' or 'hash'
+    - hash_type (str): Hash type for hash queries (default: sha256)
+
+    Returns:
+    - List[str]: List of appropriate fields to project
+    """
+
+    field_mappings = {
+        "ip": ["RemoteIP", "AccountName", "DeviceName", "IPAddress", "Timestamp"],
+        "domain": ["RemoteUrl", "AccountName", "DeviceName", "InitiatingProcessAccountName", "Timestamp"],
+        "hash": None  # Will be handled dynamically below
+    }
+
+    if item_type == "hash" and hash_type:
+        config = get_defender_fields(item_type, hash_type)
+        hash_field = config["field"]
+
+        return [hash_field, "AccountName", "DeviceName", "FileName", "FolderPath", "Timestamp"]
+
+    return field_mappings.get(item_type, [])
 
 
 # =============================================================================
@@ -368,7 +400,9 @@ def _generate_platform_query(args, items, lookback):
             event_actions = getattr(args, 'event_action', [])
             return generate_elastic_query(items, args.type, event_actions, args.hash_type, lookback=lookback)
         case "defender":
-            return generate_defender_query(items, args.type, args.hash_type, lookback=lookback)
+            include_project = getattr(args, 'project', False)
+            return _generate_defender_query(items, args.type, args.hash_type,
+                                           lookback=lookback, include_project=include_project)
         case _:
             raise ValueError(f"Unsupported mode: {args.mode}. Supported modes: {SUPPORTED_MODES}")
 
