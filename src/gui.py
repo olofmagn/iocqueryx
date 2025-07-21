@@ -27,6 +27,8 @@ from utils.ui_constants import (
     DEFAULT_TYPE,
     DEFAULT_TIME_RANGE_INDEX,
     DEFAULT_MODE,
+    DEFAULT_PADDING,
+    FRAME_SIZE_MINIMUM,
     WINDOW_TITLE,
     WINDOW_PADDING,
     WIDGET_PADDING_X,
@@ -349,12 +351,13 @@ class QueryGeneratorGUI:
         Create widgets
         """
 
-        self.frame.columnconfigure(0, weight=0, minsize=100)  # Labels column
+        self.frame.columnconfigure(0, weight=0, minsize=FRAME_SIZE_MINIMUM)  # Labels column
         self.frame.columnconfigure(1, weight=1)  # Controls column
-        self.frame.rowconfigure(8, weight=1)
+        self.frame.rowconfigure(9, weight=1)
 
         # === Input file ===
-        ttk.Label(self.frame, text="Input File:").grid(row=0, column=0, sticky=GRID_STICKY_W, padx=WIDGET_PADDING_X,
+        ttk.Label(self.frame, text="Input File:").grid(row=0, column=0, sticky=GRID_STICKY_W,
+                                                       padx=(WIDGET_PADDING_X, DEFAULT_PADDING),
                                                        pady=WIDGET_PADDING_Y)
         self.input_entry_var = ttk.Entry(self.frame)
         self.input_entry_var.grid(row=0, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
@@ -364,7 +367,8 @@ class QueryGeneratorGUI:
                                                                               pady=WIDGET_PADDING_Y)
 
         # === Mode selection ===
-        ttk.Label(self.frame, text="Mode:").grid(row=1, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+        ttk.Label(self.frame, text="Mode:").grid(row=1, column=0, sticky=GRID_STICKY_NSEW,
+                                                 padx=(WIDGET_PADDING_X, DEFAULT_PADDING),
                                                  pady=WIDGET_PADDING_Y)
         self.mode_var = tk.StringVar(value=DEFAULT_MODE)
         self.mode_combobox = ttk.Combobox(self.frame,
@@ -375,7 +379,8 @@ class QueryGeneratorGUI:
                                 pady=WIDGET_PADDING_Y)
 
         # === Type selection ===
-        ttk.Label(self.frame, text="Type:").grid(row=2, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+        ttk.Label(self.frame, text="Type:").grid(row=2, column=0, sticky=GRID_STICKY_NSEW,
+                                                 padx=(WIDGET_PADDING_X, DEFAULT_PADDING),
                                                  pady=WIDGET_PADDING_Y)
         self.type_var = tk.StringVar(value=DEFAULT_TYPE)
         self.type_combobox = ttk.Combobox(self.frame,
@@ -387,7 +392,8 @@ class QueryGeneratorGUI:
 
         # === Hash type ===
         self.hash_type_label = ttk.Label(self.frame, text="Hash Type:")
-        self.hash_type_label.grid(row=3, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+        self.hash_type_label.grid(row=3, column=0, sticky=GRID_STICKY_NSEW,
+                                  padx=(WIDGET_PADDING_X, DEFAULT_PADDING),
                                   pady=WIDGET_PADDING_Y)
         self.hash_type_var = tk.StringVar(value=DEFAULT_HASH_TYPE)
         self.hash_type_combobox = ttk.Combobox(self.frame,
@@ -399,7 +405,9 @@ class QueryGeneratorGUI:
 
         # === QID/EA ===
         self.input_label = ttk.Label(self.frame, text="QID:")
-        self.input_label.grid(row=4, column=0, sticky=GRID_STICKY_W, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        self.input_label.grid(row=4, column=0, sticky=GRID_STICKY_W,
+                              padx=(WIDGET_PADDING_X, DEFAULT_PADDING),
+                              pady=WIDGET_PADDING_Y)
 
         self.mode_entry_container = ttk.Frame(self.frame)
         self.mode_entry_container.grid(row=4, column=1, columnspan=2, sticky=GRID_STICKY_EW,
@@ -410,18 +418,18 @@ class QueryGeneratorGUI:
         self.ea_entry = ttk.Entry(self.mode_entry_container)
         self.qid_entry.grid(row=0, column=0, sticky=GRID_STICKY_EW)
 
-        self.spacer_frame = ttk.Frame(self.frame, height=1)
-        self.spacer_frame.grid(row=5, column=0, columnspan=3)
-
         # === Time range ===
-        ttk.Label(self.frame, text="Time Range:").grid(row=6, column=0, sticky=GRID_STICKY_W, padx=WIDGET_PADDING_X)
+        ttk.Label(self.frame, text="Time Range:").grid(row=5, column=0, sticky=GRID_STICKY_W,
+                                                       padx=(WIDGET_PADDING_X, DEFAULT_PADDING),
+                                                       pady=WIDGET_PADDING_Y)
         time_frame = ttk.Frame(self.frame)
-        time_frame.grid(row=6, column=1, columnspan=2, sticky=GRID_STICKY_W, padx=WIDGET_PADDING_X,
+        time_frame.grid(row=5, column=1, columnspan=2, sticky=GRID_STICKY_W, padx=WIDGET_PADDING_X,
                         pady=WIDGET_PADDING_Y)
         self.lookback_var = tk.StringVar(value=self.display_values[DEFAULT_TIME_RANGE_INDEX])
         self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=TIME_ENTRY_WIDTH)
         self.time_entry.pack(side="left")
 
+        # Arrow buttons
         self.btn_time_prev = ttk.Button(time_frame, text="❮", style="Arrow.TButton",
                                         padding=ARROW_BUTTON_PADDING, width=ARROW_BUTTON_WIDTH,
                                         command=lambda: self._change_time_range(-1))
@@ -431,36 +439,49 @@ class QueryGeneratorGUI:
                                         command=lambda: self._change_time_range(1))
         self.btn_time_next.pack(side="right", padx=1)
 
+        # === Spacer for visual separation ===
+        self.spacer_frame = ttk.Frame(self.frame, height=1)
+        self.spacer_frame.grid(row=6, column=0, columnspan=3, pady=(15, 10))
+
+        # === Apply field selection checkbox ===
+        self.include_post_pipeline_var = tk.BooleanVar(value=False)
+        self.checkbox = tk.Checkbutton(
+            self.frame,
+            text="Apply field selection",
+            variable=self.include_post_pipeline_var
+        )
+        self.checkbox.grid(row=7, column=0, columnspan=3,
+                           padx=WIDGET_PADDING_X, pady=(5, 10))
+
         # === Generate query ===
-        ttk.Button(self.frame, text="Generate Query", command=self._generate_query).grid(row=7, column=0, columnspan=3,
-                                                                                         pady=10,
-                                                                                         sticky=GRID_STICKY_NSEW,
+        ttk.Button(self.frame, text="Generate Query", command=self._generate_query).grid(row=8, column=0, columnspan=3,
+                                                                                         pady=(5, 10),
                                                                                          padx=WIDGET_PADDING_X)
 
         # === Output text ===
         self.output_text = ScrolledText(self.frame, height=self.OUTPUT_HEIGHT, wrap=tk.WORD)
-        self.output_text.grid(row=8, column=0, columnspan=3, sticky=GRID_STICKY_NSEW, pady=5, padx=WIDGET_PADDING_X)
+        self.output_text.grid(row=9, column=0, columnspan=3, sticky=GRID_STICKY_NSEW, pady=5, padx=WIDGET_PADDING_X)
 
         # === Copy to Clipboard ===
-        ttk.Button(self.frame, text="Copy to Clipboard", command=self.copy_to_clipboard).grid(row=9, column=0,
+        ttk.Button(self.frame, text="Copy to Clipboard", command=self.copy_to_clipboard).grid(row=10, column=0,
                                                                                               columnspan=3, pady=5,
                                                                                               sticky=GRID_STICKY_NSEW,
                                                                                               padx=WIDGET_PADDING_X)
 
         # === Separator ===
         separator = ttk.Separator(self.frame, orient='horizontal')
-        separator.grid(row=10, column=0, columnspan=3, sticky='nsew', pady=(10, 5))
+        separator.grid(row=11, column=0, columnspan=3, sticky='nsew', pady=(10, 5))
 
         # === Platform info label ===
         self.platform_info_label = ttk.Label(self.frame, text="")
-        self.platform_info_label.grid(row=11, column=0, columnspan=3, sticky=GRID_STICKY_NSEW, pady=(0, 2), padx=5)
+        self.platform_info_label.grid(row=12, column=0, columnspan=3, sticky=GRID_STICKY_NSEW, pady=(0, 2), padx=5)
         self.platform_info_label.config(anchor="center", justify="center")
 
         # === Copyright label ===
         self.copyright_label = ttk.Label(
             self.frame, text=COPYRIGHT_TEXT, font=COPYRIGHT_FONT, foreground=COPYRIGHT_COLOR
         )
-        self.copyright_label.grid(row=12, column=2, sticky=GRID_STICKY_E, pady=(0, 10), padx=5)
+        self.copyright_label.grid(row=13, column=2, sticky=GRID_STICKY_E, pady=(0, 10), padx=5)
 
     # =========================================================================
     # EVENT HANDLING METHODS
@@ -606,6 +627,10 @@ class QueryGeneratorGUI:
                 if eas is None:
                     return None
                 return extend_arguments_for_mode(base_args, self.current_mode, eas=eas)
+            case "defender":
+                if hasattr(self, 'include_projection_var') and self.include_projection_var.get():
+                    return base_args + ["-p"]  # projection flag
+                return base_args
             case _:
                 return base_args
 
@@ -692,6 +717,11 @@ class QueryGeneratorGUI:
             show_qid=config["show_qid"],
             show_ea=config["show_ea"]
         )
+
+        if mode == "defender":
+            self.checkbox.grid(row=6, column=0, columnspan=2, sticky="nsew")
+        else:
+            self.checkbox.grid_remove()
 
     def _toggle_entry_widgets(self, show_qid: bool, show_ea: bool) -> None:
         """
