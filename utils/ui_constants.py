@@ -24,8 +24,8 @@ ARROW_BUTTON_WIDTH = 2
 ARROW_BUTTON_PADDING = (6, 0)
 
 # Grid Positioning Constants
-GRID_STICKY_WEST = "w"
-GRID_STICKY_EAST = "ew"
+GRID_STICKY_W = "w"
+GRID_STICKY_EW = "ew"
 GRID_STICKY_NSEW = "nsew"
 GRID_STICKY_E = "e"
 
