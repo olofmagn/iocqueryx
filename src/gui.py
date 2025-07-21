@@ -628,7 +628,7 @@ class QueryGeneratorGUI:
                     return None
                 return extend_arguments_for_mode(base_args, self.current_mode, eas=eas)
             case "defender":
-                if hasattr(self, 'include_projection_var') and self.include_projection_var.get():
+                if hasattr(self, 'include_post_pipeline_var') and self.include_post_pipeline_var.get():
                     return base_args + ["-p"]  # projection flag
                 return base_args
             case _:
