@@ -34,8 +34,8 @@ from utils.ui_constants import (
     TIME_ENTRY_WIDTH,
     ARROW_BUTTON_WIDTH,
     ARROW_BUTTON_PADDING,
-    GRID_STICKY_WEST,
-    GRID_STICKY_EAST,
+    GRID_STICKY_W,
+    GRID_STICKY_EW,
     GRID_STICKY_NSEW,
     GRID_STICKY_E,
     TIME_RANGES,
@@ -221,7 +221,7 @@ def hide_entry_widget(widget) -> None:
     - widget: Widget to hide
     """
 
-    if widget.winfo_viewable():
+    if widget.winfo_ismapped():
         widget.grid_remove()
 
 
@@ -281,7 +281,7 @@ class QueryGeneratorGUI:
         self.root = root
         self.root.title(WINDOW_TITLE)
         self.root.minsize(self.MAX_HEIGHT, self.MAX_WIDTH)
-        self.root.resizable(False, False)
+        self.root.resizable(True, True)
 
         self.frame = ttk.Frame(root, padding=WINDOW_PADDING)
         self.frame.pack(fill=tk.BOTH, expand=True)
@@ -349,13 +349,17 @@ class QueryGeneratorGUI:
         Create widgets
         """
 
+        self.frame.columnconfigure(0, weight=0, minsize=100)  # Labels column
+        self.frame.columnconfigure(1, weight=1)  # Controls column
+        self.frame.rowconfigure(8, weight=1)
+
         # === Input file ===
-        ttk.Label(self.frame, text="Input File:").grid(row=0, column=0, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X,
+        ttk.Label(self.frame, text="Input File:").grid(row=0, column=0, sticky=GRID_STICKY_W, padx=WIDGET_PADDING_X,
                                                        pady=WIDGET_PADDING_Y)
         self.input_entry_var = ttk.Entry(self.frame)
         self.input_entry_var.grid(row=0, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
                                   pady=WIDGET_PADDING_Y)
-        ttk.Button(self.frame, text="Browse", command=self._browse_file).grid(row=0, column=2, sticky=GRID_STICKY_EAST,
+        ttk.Button(self.frame, text="Browse", command=self._browse_file).grid(row=0, column=2, sticky=GRID_STICKY_E,
                                                                               padx=WIDGET_PADDING_X,
                                                                               pady=WIDGET_PADDING_Y)
 
@@ -395,20 +399,24 @@ class QueryGeneratorGUI:
 
         # === QID/EA ===
         self.input_label = ttk.Label(self.frame, text="QID:")
-        self.input_label.grid(row=4, column=0, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
-        self.qid_entry = ttk.Entry(self.frame)
-        self.qid_entry.grid(row=4, column=1, columnspan=2, sticky=GRID_STICKY_EAST, padx=WIDGET_PADDING_X,
-                            pady=WIDGET_PADDING_Y)
+        self.input_label.grid(row=4, column=0, sticky=GRID_STICKY_W, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
 
-        self.ea_entry = ttk.Entry(self.frame)
-        self.ea_entry.grid(row=4, column=1, columnspan=2, sticky=GRID_STICKY_EAST, padx=WIDGET_PADDING_X,
-                           pady=WIDGET_PADDING_Y)
-        self.ea_entry.grid_remove()  # Hide by default
+        self.mode_entry_container = ttk.Frame(self.frame)
+        self.mode_entry_container.grid(row=4, column=1, columnspan=2, sticky=GRID_STICKY_EW,
+                                       padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+        self.mode_entry_container.columnconfigure(0, weight=1)
+
+        self.qid_entry = ttk.Entry(self.mode_entry_container)
+        self.ea_entry = ttk.Entry(self.mode_entry_container)
+        self.qid_entry.grid(row=0, column=0, sticky=GRID_STICKY_EW)
+
+        self.spacer_frame = ttk.Frame(self.frame, height=1)
+        self.spacer_frame.grid(row=5, column=0, columnspan=3)
 
         # === Time range ===
-        ttk.Label(self.frame, text="Time Range:").grid(row=6, column=0, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X)
+        ttk.Label(self.frame, text="Time Range:").grid(row=6, column=0, sticky=GRID_STICKY_W, padx=WIDGET_PADDING_X)
         time_frame = ttk.Frame(self.frame)
-        time_frame.grid(row=6, column=1, columnspan=2, sticky=GRID_STICKY_WEST, padx=WIDGET_PADDING_X,
+        time_frame.grid(row=6, column=1, columnspan=2, sticky=GRID_STICKY_W, padx=WIDGET_PADDING_X,
                         pady=WIDGET_PADDING_Y)
         self.lookback_var = tk.StringVar(value=self.display_values[DEFAULT_TIME_RANGE_INDEX])
         self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=TIME_ENTRY_WIDTH)
@@ -452,7 +460,7 @@ class QueryGeneratorGUI:
         self.copyright_label = ttk.Label(
             self.frame, text=COPYRIGHT_TEXT, font=COPYRIGHT_FONT, foreground=COPYRIGHT_COLOR
         )
-        self.copyright_label.grid(row=13, column=2, sticky=GRID_STICKY_E, pady=(0, 10), padx=5)
+        self.copyright_label.grid(row=12, column=2, sticky=GRID_STICKY_E, pady=(0, 10), padx=5)
 
     # =========================================================================
     # EVENT HANDLING METHODS
@@ -727,17 +735,17 @@ class QueryGeneratorGUI:
         - save_var (str): Attribute name for saving current input
         """
 
-        if not widget_to_show.winfo_viewable():
+        if not widget_to_show.winfo_ismapped():
             # Save current input from other widget
             setattr(self, save_var, widget_to_hide.get())
 
             # Restore and show target widget
             widget_to_show.delete(0, tk.END)
             widget_to_show.insert(0, getattr(self, restore_var))
-            widget_to_show.grid()
+            widget_to_show.grid(row=0, column=0, sticky=GRID_STICKY_EW)
 
         # Hide other widget if visible
-        if widget_to_hide.winfo_viewable():
+        if widget_to_hide.winfo_ismapped():
             widget_to_hide.grid_remove()
 
     def _update_hash_type_visibility(self) -> None:
