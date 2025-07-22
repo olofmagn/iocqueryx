@@ -24,7 +24,7 @@ from .configuration import (
 )
 
 """
-Generate queries based on provided platform 'aql', 'elastic' or 'defender
+Generate queries based on provided platform 'aql', 'elastic' or 'defender'
 """
 
 # =============================================================================

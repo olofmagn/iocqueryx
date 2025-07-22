@@ -187,41 +187,22 @@ Example usage of an input file of type: `ip`, mode: `aql` and `qid`.
 <img src="pictures/app-in-use.png" alt="app in use" width="400"/>
 
 ### CLI
+Qradar IBM (IPs)
 
 ```python3
-python3 - m
-src.main - i
-sample.txt - m
-aql - t
-ip - q
-20257872 - l
-10
-m
+python3 -m src.main -i testips.txt -m aql -t ip -q 1337 1338 -l 10m
 ```
 
 Elastic Query (Hashes):
 
 ```python3
-python3 - m
-src.main - i
-sample.txt - m
-es - t
-hash - ht
-sha1 - l
-10
-m
+python3 -m src.main -i hash.txt -m es -t hash -ht sha1 -ea 1337 1338 -l 10m
 ```
 
 Defender Query (Domains):
 
 ```python3
-python3 - m
-src.main - i
-sample.txt - m
-defender - t
-domain - l
-10
-m
+python3 -m src.main -i domain.txt -m defender -t domain -l 10m -p
 ```
 
 ## License
