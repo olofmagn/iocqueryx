@@ -139,7 +139,7 @@ def _get_field_for_platform(platform_fields: Dict, item_type: str, hash_type: st
 # FIELD MAPPING HELPER FUNCTIONS
 # =============================================================================
 
-def get_aql_field(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> str:
+def _get_aql_field(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> str:
     """
     Get AQL field.
 
@@ -154,7 +154,7 @@ def get_aql_field(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> str:
     return _get_field_for_platform(AQL_FIELDS, item_type, hash_type, "aql")
 
 
-def get_elastic_field(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> str:
+def _get_elastic_field(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> str:
     """
     Get Elastic field.
 
@@ -169,7 +169,7 @@ def get_elastic_field(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> str
     return _get_field_for_platform(ELASTIC_FIELDS, item_type, hash_type, "es")
 
 
-def get_defender_fields(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> Dict[str, str]:
+def _get_defender_fields(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> Dict[str, str]:
     """
     Get Defender config.
 
@@ -197,7 +197,7 @@ def get_defender_fields(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> D
 # QUERY GENERATION FUNCTIONS
 # =============================================================================
 
-def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int]] = None, hash_type: str = "sha256",
+def _generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int]] = None, hash_type: str = "sha256",
                        lookback: str = None) -> str:
     """
     Generate AQL query
@@ -215,7 +215,7 @@ def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int
 
     qids = qids or []
 
-    field = get_aql_field(item_type, hash_type)
+    field = _get_aql_field(item_type, hash_type)
 
     qid_condition = build_conditions(
         "qid", qids, operator="or", wrap_values=True, comparator="=")
@@ -229,7 +229,7 @@ def generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int
     return query
 
 
-def generate_elastic_query(items: List[str], item_type: str, event_actions: Optional[List[str]] = None,
+def _generate_elastic_query(items: List[str], item_type: str, event_actions: Optional[List[str]] = None,
                            hash_type: str = "sha256", lookback: str = None) -> str:
     """
     Generate elastic query
@@ -247,7 +247,7 @@ def generate_elastic_query(items: List[str], item_type: str, event_actions: Opti
 
     event_actions = event_actions or []
 
-    field = get_elastic_field(item_type, hash_type)
+    field = _get_elastic_field(item_type, hash_type)
 
     event_action_condition = build_conditions("event.action", event_actions, operator="or", wrap_values=True,
                                               quote_char="'", comparator=":")
@@ -276,7 +276,7 @@ def _generate_defender_query(items: List[str], item_type: str, hash_type: str = 
     - str: Defender Query string
     """
 
-    config = get_defender_fields(item_type, hash_type)
+    config = _get_defender_fields(item_type, hash_type)
     field = config["field"]
     table = config["table"]
 
@@ -311,7 +311,7 @@ def _get_defender_project_fields(item_type: str, hash_type: str = None) -> List[
     }
 
     if item_type == "hash" and hash_type:
-        config = get_defender_fields(item_type, hash_type)
+        config = _get_defender_fields(item_type, hash_type)
         hash_field = config["field"]
 
         return [hash_field, "AccountName", "DeviceName", "FileName", "FolderPath", "Timestamp"]
@@ -395,10 +395,10 @@ def _generate_platform_query(args, items, lookback):
     match args.mode.lower():
         case "aql":
             qid_list = getattr(args, 'qid', [])
-            return generate_aql_query(items, args.type, qid_list, args.hash_type, lookback=lookback)
+            return _generate_aql_query(items, args.type, qid_list, args.hash_type, lookback=lookback)
         case "es":
             event_actions = getattr(args, 'event_action', [])
-            return generate_elastic_query(items, args.type, event_actions, args.hash_type, lookback=lookback)
+            return _generate_elastic_query(items, args.type, event_actions, args.hash_type, lookback=lookback)
         case "defender":
             include_project = getattr(args, 'project', False)
             return _generate_defender_query(items, args.type, args.hash_type,
