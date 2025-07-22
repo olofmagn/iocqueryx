@@ -198,7 +198,7 @@ def _get_defender_fields(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> 
 # =============================================================================
 
 def _generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int]] = None, hash_type: str = "sha256",
-                       lookback: str = None) -> str:
+                        lookback: str = None) -> str:
     """
     Generate AQL query
 
@@ -230,7 +230,7 @@ def _generate_aql_query(items: List[str], item_type: str, qids: Optional[List[in
 
 
 def _generate_elastic_query(items: List[str], item_type: str, event_actions: Optional[List[str]] = None,
-                           hash_type: str = "sha256", lookback: str = None) -> str:
+                            hash_type: str = "sha256", lookback: str = None) -> str:
     """
     Generate elastic query
 
@@ -255,14 +255,14 @@ def _generate_elastic_query(items: List[str], item_type: str, event_actions: Opt
 
     # Construct final query
     if event_action_condition:
-        query = f"({conditions}) and ({event_action_condition}) and @timestamp >= now-{lookback}"
+        query = f"{conditions} and ({event_action_condition}) and @timestamp >= now-{lookback}"
     else:
-        query = f"({conditions}) and @timestamp >= now-{lookback}"
+        query = f"{conditions} and @timestamp >= now-{lookback}"
     return query
 
 
 def _generate_defender_query(items: List[str], item_type: str, hash_type: str = "sha256", lookback: str = None,
-                            include_project: bool = False) -> str:
+                             include_project: bool = False) -> str:
     """
     Generate defender query
 
@@ -402,7 +402,7 @@ def _generate_platform_query(args, items, lookback):
         case "defender":
             include_project = getattr(args, 'project', False)
             return _generate_defender_query(items, args.type, args.hash_type,
-                                           lookback=lookback, include_project=include_project)
+                                            lookback=lookback, include_project=include_project)
         case _:
             raise ValueError(f"Unsupported mode: {args.mode}. Supported modes: {SUPPORTED_MODES}")
 
