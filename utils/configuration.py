@@ -56,7 +56,7 @@ def get_logger(name: str = DEFAULT_LOGGER_NAME, level: int = DEFAULT_LOG_LEVEL) 
     return logger
 
 
-def create_module_logger() -> logging.Logger:
+def _create_module_logger() -> logging.Logger:
     """
     Create module logger
     """
@@ -65,14 +65,14 @@ def create_module_logger() -> logging.Logger:
 
 
 # Module-level logger
-logger = create_module_logger()
+logger = _create_module_logger()
 
 
 # =============================================================================
 # FILE PROCESSING UTILITIES
 # =============================================================================
 
-def read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[str]:
+def _read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[str]:
     """
     Read file lines.
 
@@ -115,12 +115,12 @@ def extract_items(file_path: str) -> List[str]:
     - List[str]: List containing only the first column from each non-empty line
     """
 
-    lines = read_file_lines(file_path)
+    lines = _read_file_lines(file_path)
 
-    return [extract_first_column(line) for line in lines]
+    return [_extract_first_column(line) for line in lines]
 
 
-def extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
+def _extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
     """
     Extract first column 
 
@@ -153,7 +153,7 @@ def get_supported_hash_types(mode: str) -> List[str]:
     return PLATFORM_HASH_TYPES.get(mode.lower(), SUPPORTED_HASH_TYPES)
 
 
-def format_condition_value(value, wrap_values: bool = False, quote_char: str = "'") -> str:
+def _format_condition_value(value, wrap_values: bool = False, quote_char: str = "'") -> str:
     """
     Format condition value
 
@@ -185,7 +185,7 @@ def create_single_condition(field: str, value, comparator: str = "=", wrap_value
     - str: Single condition string
     """
 
-    formatted_value = format_condition_value(value, wrap_values, quote_char)
+    formatted_value = _format_condition_value(value, wrap_values, quote_char)
 
     return f"{field}{comparator}{formatted_value}"
 
@@ -222,7 +222,7 @@ def build_conditions(field: str, values: list, operator: str = "AND", wrap_value
 # TIME PROCESSING UTILITIES
 # =============================================================================
 
-def validate_time_value(value: int) -> bool:
+def _validate_time_value(value: int) -> bool:
     """
     Validate time value
 
@@ -236,7 +236,7 @@ def validate_time_value(value: int) -> bool:
     return value > 0
 
 
-def normalize_time_unit(unit: str) -> Optional[str]:
+def _normalize_time_unit(unit: str) -> Optional[str]:
     """
     Normalize time unit
 
@@ -255,7 +255,7 @@ def normalize_time_unit(unit: str) -> Optional[str]:
     return None
 
 
-def parse_lookback_string(lookback: str) -> Optional[Tuple[int, str]]:
+def _parse_lookback_string(lookback: str) -> Optional[Tuple[int, str]]:
     """
     Parse lookback string
 
@@ -279,10 +279,10 @@ def parse_lookback_string(lookback: str) -> Optional[Tuple[int, str]]:
     except ValueError:
         return None
 
-    if not validate_time_value(value):
+    if not _validate_time_value(value):
         return None
 
-    normalized_unit = normalize_time_unit(unit)
+    normalized_unit = _normalize_time_unit(unit)
 
     if normalized_unit is None:
         return None
@@ -290,7 +290,7 @@ def parse_lookback_string(lookback: str) -> Optional[Tuple[int, str]]:
     return value, normalized_unit
 
 
-def format_time_for_platform(value: int, unit: str, mode: str) -> str | None:
+def _format_time_for_platform(value: int, unit: str, mode: str) -> str | None:
     """
     Format time for platform
 
@@ -335,21 +335,21 @@ def normalize_lookback(lookback: str, mode: str) -> Optional[str]:
     if not lookback or not mode:
         return None
 
-    parsed = parse_lookback_string(lookback)
+    parsed = _parse_lookback_string(lookback)
 
     if parsed is None:
         return None
 
     value, unit = parsed
 
-    return format_time_for_platform(value, unit, mode)
+    return _format_time_for_platform(value, unit, mode)
 
 
 # =============================================================================
 # ARGUMENT PARSER UTILITIES
 # =============================================================================
 
-def create_base_parser() -> argparse.ArgumentParser:
+def _create_base_parser() -> argparse.ArgumentParser:
     """
     Create base parser
     """
@@ -360,7 +360,7 @@ def create_base_parser() -> argparse.ArgumentParser:
     )
 
 
-def add_required_arguments(parser: argparse.ArgumentParser) -> None:
+def _add_required_arguments(parser: argparse.ArgumentParser) -> None:
     """
     Add required arguments
     """
@@ -388,7 +388,7 @@ def add_required_arguments(parser: argparse.ArgumentParser) -> None:
                         help="The type of parameter ioc parameter to use")
 
 
-def add_optional_arguments(parser: argparse.ArgumentParser) -> None:
+def _add_optional_arguments(parser: argparse.ArgumentParser) -> None:
     """
     Add optional arguments
     """
@@ -423,8 +423,8 @@ def create_parser() -> argparse.ArgumentParser:
     Create parser logic
     """
 
-    parser = create_base_parser()
-    add_required_arguments(parser)
-    add_optional_arguments(parser)
+    parser = _create_base_parser()
+    _add_required_arguments(parser)
+    _add_optional_arguments(parser)
 
     return parser
