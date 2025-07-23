@@ -24,7 +24,7 @@ from .configuration import (
 )
 
 """
-Generate queries based on provided platform 'aql', 'elastic' or 'defender
+Generate queries based on provided platform 'aql', 'elastic' or 'defender'
 """
 
 # =============================================================================
@@ -68,8 +68,8 @@ DEFENDER_FIELDS = {
     "hash": {
         "table": "DeviceFileEvents",
         "fields": {
-            "md5": "InitiatingProcessMD5",
-            "sha1": "InitiatingProcessSHA1",
+            "md5": "MD5",
+            "sha1": "SHA1",
             "sha256": "SHA256"
         }
     }
@@ -187,8 +187,12 @@ def _get_defender_fields(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> 
 
     if item_type == "hash":
         _validate_hash_type(hash_type, "defender")
-        config["field"] = config["fields"][hash_type.lower()]
-        del config["fields"]  # Clean up the nested structure
+        hash_field = config["fields"][hash_type.lower()]
+        # Return a consistent dict structure
+        return {
+            "field": hash_field,
+            "table": config["table"]
+        }
 
     return config
 
@@ -280,7 +284,7 @@ def _generate_defender_query(items: List[str], item_type: str, hash_type: str = 
     field = config["field"]
     table = config["table"]
 
-    conditions = " or ".join([f"{field} contains '{item}'" for item in items])
+    conditions = " or ".join([f"{field} has '{item}'" for item in items])
     query = f"{table} \n | where {conditions} \n | where Timestamp > ago({lookback})"
 
     if include_project:
@@ -304,17 +308,21 @@ def _get_defender_project_fields(item_type: str, hash_type: str = None) -> List[
     - List[str]: List of appropriate fields to project
     """
 
+    base_fields = ["Timestamp", "DeviceName"]
+
     field_mappings = {
-        "ip": ["RemoteIP", "AccountName", "DeviceName", "IPAddress", "Timestamp"],
-        "domain": ["RemoteUrl", "AccountName", "DeviceName", "InitiatingProcessAccountName", "Timestamp"],
-        "hash": None  # Will be handled dynamically below
+        "ip": base_fields + ["RemoteIP", "AccountName", "InitiatingProcessAccountName",
+                             "InitiatingProcessAccountUpn", "IPAddress"],
+        "domain": base_fields + ["RemoteUrl", "AccountName", "InitiatingProcessAccountName",
+                                 "InitiatingProcessAccountUpn"],
+        "hash": base_fields + ["AccountName", "FileName", "InitiatingProcessAccountName",
+                               "InitiatingProcessAccountUpn", "FolderPath"]
     }
 
     if item_type == "hash" and hash_type:
         config = _get_defender_fields(item_type, hash_type)
         hash_field = config["field"]
-
-        return [hash_field, "AccountName", "DeviceName", "FileName", "FolderPath", "Timestamp"]
+        return [hash_field] + field_mappings["hash"]
 
     return field_mappings.get(item_type, [])
 
