@@ -1,3 +1,12 @@
+import sys
+import questionary
+import tkinter as tk
+
+from colorama import Fore, Style
+
+from .gui import QueryGeneratorGUI
+from utils import create_parser, generate_query_from_args, get_logger
+
 """
 A simple program that generates a search query based on a given list.
 
@@ -7,15 +16,6 @@ Date: 2025-07-02
 
 VERSION = "1.0.0"
 AUTHOR = "olofmagn"
-
-import sys
-import questionary
-import tkinter as tk
-
-from colorama import Fore, Style
-
-from .gui import QueryGeneratorGUI
-from utils import create_parser, generate_query_from_args, get_logger
 
 BANNER = rf"""
 
@@ -60,8 +60,7 @@ def main():
 
     try:
         mode = questionary.select(
-            "Choose interface mode:",
-            choices=["GUI", "CLI", "EXIT"]
+            "Choose interface mode:", choices=["GUI", "CLI", "EXIT"]
         ).ask()
 
         if mode in (None, "EXIT"):
@@ -70,7 +69,9 @@ def main():
 
         if mode == "CLI":
             parser = create_parser()
-            print(f"\n{Fore.YELLOW}{Style.BRIGHT}Here's how to use the CLI:\n{Style.RESET_ALL}")
+            print(
+                f"\n{Fore.YELLOW}{Style.BRIGHT}Here's how to use the CLI:\n{Style.RESET_ALL}"
+            )
             parser.print_help()
         else:  # GUI
             root = tk.Tk()

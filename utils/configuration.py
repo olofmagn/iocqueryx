@@ -33,13 +33,17 @@ from utils.ui_constants import (
 # LOGGING UTILITIES
 # =============================================================================
 
-def get_logger(name: str = DEFAULT_LOGGER_NAME, level: int = DEFAULT_LOG_LEVEL) -> logging.Logger:
+
+def get_logger(
+    name: str = DEFAULT_LOGGER_NAME, level: int = DEFAULT_LOG_LEVEL
+) -> logging.Logger:
     """
-    get_logger utility
+    Logger utility
 
     Args:
     - name (str): Logger name (default: IocQueryx)
     - level (int): Logging level (default: INFO)
+
     Returns:
     - logging.Logger: Configured logger instance
     """
@@ -52,7 +56,6 @@ def get_logger(name: str = DEFAULT_LOGGER_NAME, level: int = DEFAULT_LOG_LEVEL) 
         formatter = logging.Formatter(LOG_FORMAT)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-
     return logger
 
 
@@ -72,6 +75,7 @@ logger = _create_module_logger()
 # FILE PROCESSING UTILITIES
 # =============================================================================
 
+
 def _read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[str]:
     """
     Read file lines.
@@ -89,7 +93,7 @@ def _read_file_lines(file_path: str, encoding: str = DEFAULT_ENCODING) -> List[s
         raise ValueError("File path cannot be empty")
 
     try:
-        with open(file_path, 'r', encoding=encoding) as f:
+        with open(file_path, "r", encoding=encoding) as f:
             lines = [line.strip() for line in f if line.strip()]
         if not lines:
             raise ValueError(f"File {file_path} is empty or contains no valid data")
@@ -122,7 +126,7 @@ def extract_items(file_path: str) -> List[str]:
 
 def _extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
     """
-    Extract first column 
+    Extract first column
 
     Args:
     - line (str): Line to process
@@ -139,6 +143,7 @@ def _extract_first_column(line: str, delimiter: str = CSV_DELIMITER) -> str:
 # QUERY CONDITION UTILITIES
 # =============================================================================
 
+
 def get_supported_hash_types(mode: str) -> List[str]:
     """
     Get supported hash types for a specific mode.
@@ -153,7 +158,9 @@ def get_supported_hash_types(mode: str) -> List[str]:
     return PLATFORM_HASH_TYPES.get(mode.lower(), SUPPORTED_HASH_TYPES)
 
 
-def _format_condition_value(value, wrap_values: bool = False, quote_char: str = "'") -> str:
+def _format_condition_value(
+    value, wrap_values: bool = False, quote_char: str = "'"
+) -> str:
     """
     Format condition value
 
@@ -169,8 +176,13 @@ def _format_condition_value(value, wrap_values: bool = False, quote_char: str = 
     return f"{quote_char}{value}{quote_char}" if wrap_values else str(value)
 
 
-def create_single_condition(field: str, value, comparator: str = "=", wrap_values: bool = False,
-                            quote_char: str = "'") -> str:
+def create_single_condition(
+    field: str,
+    value,
+    comparator: str = "=",
+    wrap_values: bool = False,
+    quote_char: str = "'",
+) -> str:
     """
     Create single condition
 
@@ -190,8 +202,14 @@ def create_single_condition(field: str, value, comparator: str = "=", wrap_value
     return f"{field}{comparator}{formatted_value}"
 
 
-def build_conditions(field: str, values: list, operator: str = "AND", wrap_values: bool = False, quote_char: str = "'",
-                     comparator: str = "=") -> str:
+def build_conditions(
+    field: str,
+    values: list,
+    operator: str = "AND",
+    wrap_values: bool = False,
+    quote_char: str = "'",
+    comparator: str = "=",
+) -> str:
     """
     Build conditions
 
@@ -221,6 +239,7 @@ def build_conditions(field: str, values: list, operator: str = "AND", wrap_value
 # =============================================================================
 # TIME PROCESSING UTILITIES
 # =============================================================================
+
 
 def _validate_time_value(value: int) -> bool:
     """
@@ -349,6 +368,7 @@ def normalize_lookback(lookback: str, mode: str) -> Optional[str]:
 # ARGUMENT PARSER UTILITIES
 # =============================================================================
 
+
 def _create_base_parser() -> argparse.ArgumentParser:
     """
     Create base parser
@@ -356,7 +376,7 @@ def _create_base_parser() -> argparse.ArgumentParser:
 
     return argparse.ArgumentParser(
         description="Generate threat hunting queries for fast lookup of IOCs",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
 
@@ -365,27 +385,35 @@ def _add_required_arguments(parser: argparse.ArgumentParser) -> None:
     Add required arguments
     """
 
-    parser.add_argument("-i", "--input",
-                        type=str,
-                        required=True,
-                        help="Path to the url/ip/hash file")
+    parser.add_argument(
+        "-i", "--input", type=str, required=True, help="Path to the url/ip/hash file"
+    )
 
-    parser.add_argument("-m", "--mode",
-                        type=str,
-                        required=True,
-                        choices=SUPPORTED_MODES,
-                        help="SIEM query mode")
+    parser.add_argument(
+        "-m",
+        "--mode",
+        type=str,
+        required=True,
+        choices=SUPPORTED_MODES,
+        help="SIEM query mode",
+    )
 
-    parser.add_argument("-l", "--lookback",
-                        type=str,
-                        required=True,
-                        help="Time lookback window for search (e.g., '24h', '7d')")
+    parser.add_argument(
+        "-l",
+        "--lookback",
+        type=str,
+        required=True,
+        help="Time lookback window for search (e.g., '24h', '7d')",
+    )
 
-    parser.add_argument("-t", "--type",
-                        type=str,
-                        required=True,
-                        choices=SUPPORTED_TYPES,
-                        help="The type of parameter ioc parameter to use")
+    parser.add_argument(
+        "-t",
+        "--type",
+        type=str,
+        required=True,
+        choices=SUPPORTED_TYPES,
+        help="The type of parameter ioc parameter to use",
+    )
 
 
 def _add_optional_arguments(parser: argparse.ArgumentParser) -> None:
@@ -393,29 +421,39 @@ def _add_optional_arguments(parser: argparse.ArgumentParser) -> None:
     Add optional arguments
     """
 
-    parser.add_argument("-ht", "--hash_type",
-                        type=str,
-                        default=DEFAULT_HASH_TYPE,
-                        choices=SUPPORTED_HASH_TYPES,
-                        help=f"Hash type for hash queries (default: {DEFAULT_HASH_TYPE.upper()})")
+    parser.add_argument(
+        "-ht",
+        "--hash_type",
+        type=str,
+        default=DEFAULT_HASH_TYPE,
+        choices=SUPPORTED_HASH_TYPES,
+        help=f"Hash type for hash queries (default: {DEFAULT_HASH_TYPE.upper()})",
+    )
 
-    parser.add_argument("-q", "--qid",
-                        type=int,
-                        nargs="+",
-                        help="Numeric representation of an event - e.g., firewall permit for qradar")
+    parser.add_argument(
+        "-q",
+        "--qid",
+        type=int,
+        nargs="+",
+        help="Numeric representation of an event - e.g., firewall permit for qradar",
+    )
 
-    parser.add_argument("-ea", "--event_action",
-                        type=str,
-                        nargs="+",
-                        help="String representation of an event - e.g., firewall permit for elastic")
+    parser.add_argument(
+        "-ea",
+        "--event_action",
+        type=str,
+        nargs="+",
+        help="String representation of an event - e.g., firewall permit for elastic",
+    )
 
-    parser.add_argument("-o", "--output",
-                        type=str,
-                        help="Optional file to save query")
+    parser.add_argument("-o", "--output", type=str, help="Optional file to save query")
 
-    parser.add_argument("-p", "--project",
-                        action="store_true",
-                        help="Apply field projection for Defender queries")
+    parser.add_argument(
+        "-p",
+        "--project",
+        action="store_true",
+        help="Apply field projection for Defender queries",
+    )
 
 
 def create_parser() -> argparse.ArgumentParser:

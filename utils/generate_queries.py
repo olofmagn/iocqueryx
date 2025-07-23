@@ -1,10 +1,3 @@
-"""
-A simple program that generates a search query based on a given list
-
-Author: Olof Magnusson
-Date: 2025-07-02
-"""
-
 import argparse
 from typing import List, Optional, Union, Dict
 
@@ -13,8 +6,7 @@ from utils.ui_constants import (
     PLATFORM_HASH_TYPES,
     SUPPORTED_HASH_TYPES,
     SUPPORTED_MODES,
-    SUPPORTED_ITEM_TYPES
-
+    SUPPORTED_ITEM_TYPES,
 )
 from .configuration import (
     create_parser,
@@ -22,6 +14,14 @@ from .configuration import (
     build_conditions,
     normalize_lookback,
 )
+
+
+"""
+A simple program that generates a search query based on a given list
+
+Author: Olof Magnusson
+Date: 2025-07-02
+"""
 
 """
 Generate queries based on provided platform 'aql', 'elastic' or 'defender'
@@ -35,13 +35,13 @@ Generate queries based on provided platform 'aql', 'elastic' or 'defender'
 # AQL Platform Field Mappings
 AQL_FIELDS = {
     "ip": "sourceip",
-    "domain": "\"URL Domain\"",
+    "domain": '"URL Domain"',
     "hash": {
-        "filehash": "\"File Hash\"",
-        "md5": "\"MD5 Hash\"",
-        "sha1": "\"SHA1 Hash\"",
-        "sha256": "\"SHA256 Hash\""
-    }
+        "filehash": '"File Hash"',
+        "md5": '"MD5 Hash"',
+        "sha1": '"SHA1 Hash"',
+        "sha256": '"SHA256 Hash"',
+    },
 }
 
 # Elasticsearch Platform Field Mappings
@@ -51,34 +51,25 @@ ELASTIC_FIELDS = {
     "hash": {
         "md5": "file.hash.md5",
         "sha1": "file.hash.sha1",
-        "sha256": "file.hash.sha256"
-    }
+        "sha256": "file.hash.sha256",
+    },
 }
 
 # Microsoft Defender Platform Configuration
 DEFENDER_FIELDS = {
-    "ip": {
-        "field": "RemoteIP",
-        "table": "DeviceNetworkEvents"
-    },
-    "domain": {
-        "field": "RemoteUrl",
-        "table": "DeviceNetworkEvents"
-    },
+    "ip": {"field": "RemoteIP", "table": "DeviceNetworkEvents"},
+    "domain": {"field": "RemoteUrl", "table": "DeviceNetworkEvents"},
     "hash": {
         "table": "DeviceFileEvents",
-        "fields": {
-            "md5": "MD5",
-            "sha1": "SHA1",
-            "sha256": "SHA256"
-        }
-    }
+        "fields": {"md5": "MD5", "sha1": "SHA1", "sha256": "SHA256"},
+    },
 }
 
 
 # =============================================================================
 # VALIDATION UTILITY FUNCTIONS
 # =============================================================================
+
 
 def _validate_item_type(item_type: str) -> None:
     """
@@ -90,8 +81,11 @@ def _validate_item_type(item_type: str) -> None:
     Raises:
     - ValueError: If item_type is not supported
     """
+
     if item_type not in SUPPORTED_ITEM_TYPES:
-        raise ValueError(f"Unsupported item_type: {item_type}. Must be one of: {SUPPORTED_ITEM_TYPES}")
+        raise ValueError(
+            f"Unsupported item_type: {item_type}. Must be one of: {SUPPORTED_ITEM_TYPES}"
+        )
 
 
 def _validate_hash_type(hash_type: str, mode: str = None) -> None:
@@ -106,13 +100,21 @@ def _validate_hash_type(hash_type: str, mode: str = None) -> None:
     - ValueError: If hash_type is not supported
     """
 
-    supported_types = PLATFORM_HASH_TYPES.get(mode, SUPPORTED_HASH_TYPES) if mode else SUPPORTED_HASH_TYPES
+    supported_types = (
+        PLATFORM_HASH_TYPES.get(mode, SUPPORTED_HASH_TYPES)
+        if mode
+        else SUPPORTED_HASH_TYPES
+    )
 
     if hash_type.lower() not in supported_types:
-        raise ValueError(f"Unsupported hash_type: {hash_type}. Must be one of: {supported_types}")
+        raise ValueError(
+            f"Unsupported hash_type: {hash_type}. Must be one of: {supported_types}"
+        )
 
 
-def _get_field_for_platform(platform_fields: Dict, item_type: str, hash_type: str, mode: str = None) -> str:
+def _get_field_for_platform(
+    platform_fields: Dict, item_type: str, hash_type: str, mode: str = None
+) -> str:
     """
     Get field for a specific platform.
 
@@ -131,13 +133,13 @@ def _get_field_for_platform(platform_fields: Dict, item_type: str, hash_type: st
     if item_type == "hash":
         _validate_hash_type(hash_type, mode)
         return platform_fields["hash"][hash_type.lower()]
-
     return platform_fields[item_type]
 
 
 # =============================================================================
 # FIELD MAPPING HELPER FUNCTIONS
 # =============================================================================
+
 
 def _get_aql_field(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> str:
     """
@@ -169,7 +171,9 @@ def _get_elastic_field(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> st
     return _get_field_for_platform(ELASTIC_FIELDS, item_type, hash_type, "es")
 
 
-def _get_defender_fields(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> Dict[str, str]:
+def _get_defender_fields(
+    item_type: str, hash_type: str = DEFAULT_HASH_TYPE
+) -> Dict[str, str]:
     """
     Get Defender config.
 
@@ -189,11 +193,7 @@ def _get_defender_fields(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> 
         _validate_hash_type(hash_type, "defender")
         hash_field = config["fields"][hash_type.lower()]
         # Return a consistent dict structure
-        return {
-            "field": hash_field,
-            "table": config["table"]
-        }
-
+        return {"field": hash_field, "table": config["table"]}
     return config
 
 
@@ -201,8 +201,14 @@ def _get_defender_fields(item_type: str, hash_type: str = DEFAULT_HASH_TYPE) -> 
 # QUERY GENERATION FUNCTIONS
 # =============================================================================
 
-def _generate_aql_query(items: List[str], item_type: str, qids: Optional[List[int]] = None, hash_type: str = "sha256",
-                        lookback: str = None) -> str:
+
+def _generate_aql_query(
+    items: List[str],
+    item_type: str,
+    qids: Optional[List[int]] = None,
+    hash_type: str = "sha256",
+    lookback: str = None,
+) -> str:
     """
     Generate AQL query
 
@@ -222,19 +228,25 @@ def _generate_aql_query(items: List[str], item_type: str, qids: Optional[List[in
     field = _get_aql_field(item_type, hash_type)
 
     qid_condition = build_conditions(
-        "qid", qids, operator="or", wrap_values=True, comparator="=")
+        "qid", qids, operator="or", wrap_values=True, comparator="="
+    )
     conditions = " or ".join([f"{field}='{item}'" for item in items])
 
     # Construct final query
     if qid_condition:
-        query = f"SELECT * from events where ({conditions}) and ({qid_condition}) LAST {lookback}"
+        query = f"SELECT * from events where {conditions} and ({qid_condition}) LAST {lookback}"
     else:
-        query = f"SELECT * from events where ({conditions}) LAST {lookback}"
+        query = f"SELECT * from events where {conditions} LAST {lookback}"
     return query
 
 
-def _generate_elastic_query(items: List[str], item_type: str, event_actions: Optional[List[str]] = None,
-                            hash_type: str = "sha256", lookback: str = None) -> str:
+def _generate_elastic_query(
+    items: List[str],
+    item_type: str,
+    event_actions: Optional[List[str]] = None,
+    hash_type: str = "sha256",
+    lookback: str = None,
+) -> str:
     """
     Generate elastic query
 
@@ -253,8 +265,14 @@ def _generate_elastic_query(items: List[str], item_type: str, event_actions: Opt
 
     field = _get_elastic_field(item_type, hash_type)
 
-    event_action_condition = build_conditions("event.action", event_actions, operator="or", wrap_values=True,
-                                              quote_char="'", comparator=":")
+    event_action_condition = build_conditions(
+        "event.action",
+        event_actions,
+        operator="or",
+        wrap_values=True,
+        quote_char="'",
+        comparator=":",
+    )
     conditions = " or ".join([f"{field}:'{item}'" for item in items])
 
     # Construct final query
@@ -265,8 +283,13 @@ def _generate_elastic_query(items: List[str], item_type: str, event_actions: Opt
     return query
 
 
-def _generate_defender_query(items: List[str], item_type: str, hash_type: str = "sha256", lookback: str = None,
-                             include_project: bool = False) -> str:
+def _generate_defender_query(
+    items: List[str],
+    item_type: str,
+    hash_type: str = "sha256",
+    lookback: str = None,
+    include_project: bool = False,
+) -> str:
     """
     Generate defender query
 
@@ -281,6 +304,7 @@ def _generate_defender_query(items: List[str], item_type: str, hash_type: str = 
     """
 
     config = _get_defender_fields(item_type, hash_type)
+
     field = config["field"]
     table = config["table"]
 
@@ -292,7 +316,6 @@ def _generate_defender_query(items: List[str], item_type: str, hash_type: str = 
         if project_fields:
             fields_str = ", ".join(project_fields)
             query += f"\n | project {fields_str}"
-
     return query
 
 
@@ -311,19 +334,35 @@ def _get_defender_project_fields(item_type: str, hash_type: str = None) -> List[
     base_fields = ["Timestamp", "DeviceName"]
 
     field_mappings = {
-        "ip": base_fields + ["RemoteIP", "AccountName", "InitiatingProcessAccountName",
-                             "InitiatingProcessAccountUpn", "IPAddress"],
-        "domain": base_fields + ["RemoteUrl", "AccountName", "InitiatingProcessAccountName",
-                                 "InitiatingProcessAccountUpn"],
-        "hash": base_fields + ["AccountName", "FileName", "InitiatingProcessAccountName",
-                               "InitiatingProcessAccountUpn", "FolderPath"]
+        "ip": base_fields
+        + [
+            "RemoteIP",
+            "AccountName",
+            "InitiatingProcessAccountName",
+            "InitiatingProcessAccountUpn",
+            "IPAddress",
+        ],
+        "domain": base_fields
+        + [
+            "RemoteUrl",
+            "AccountName",
+            "InitiatingProcessAccountName",
+            "InitiatingProcessAccountUpn",
+        ],
+        "hash": base_fields
+        + [
+            "AccountName",
+            "FileName",
+            "InitiatingProcessAccountName",
+            "InitiatingProcessAccountUpn",
+            "FolderPath",
+        ],
     }
 
     if item_type == "hash" and hash_type:
         config = _get_defender_fields(item_type, hash_type)
         hash_field = config["field"]
         return [hash_field] + field_mappings["hash"]
-
     return field_mappings.get(item_type, [])
 
 
@@ -356,8 +395,7 @@ def _validate_supported_value(args, attr_name, supported_values):
     """
 
     if getattr(args, attr_name).lower() not in supported_values:
-        raise ValueError(
-            f"Unsupported {attr_name}: Must be one of: {supported_values}")
+        raise ValueError(f"Unsupported {attr_name}: Must be one of: {supported_values}")
 
 
 def _validate_and_setup_args(args):
@@ -369,25 +407,28 @@ def _validate_and_setup_args(args):
     """
 
     # Validate required attributes
-    _validate_required_attr(args, 'input')
-    _validate_required_attr(args, 'lookback')
-    _validate_required_attr(args, 'mode')
-    _validate_required_attr(args, 'type')
+    _validate_required_attr(args, "input")
+    _validate_required_attr(args, "lookback")
+    _validate_required_attr(args, "mode")
+    _validate_required_attr(args, "type")
 
     # Validate supported values
-    _validate_supported_value(args, 'mode', SUPPORTED_MODES)
-    _validate_supported_value(args, 'type', SUPPORTED_ITEM_TYPES)
+    _validate_supported_value(args, "mode", SUPPORTED_MODES)
+    _validate_supported_value(args, "type", SUPPORTED_ITEM_TYPES)
 
     # Handle hash type validation and defaults
     if args.type.lower() == "hash":
-        if not getattr(args, 'hash_type') or not args.hash_type:
+        if not getattr(args, "hash_type") or not args.hash_type:
             args.hash_type = DEFAULT_HASH_TYPE
         else:
-            supported_hash_types = PLATFORM_HASH_TYPES.get(args.mode.lower(), SUPPORTED_HASH_TYPES)
+            supported_hash_types = PLATFORM_HASH_TYPES.get(
+                args.mode.lower(), SUPPORTED_HASH_TYPES
+            )
             if args.hash_type.lower() not in supported_hash_types:
                 raise ValueError(
                     f"Unsupported hash_type: {args.hash_type} for {args.mode}. "
-                    f"Must be one of: {supported_hash_types}")
+                    f"Must be one of: {supported_hash_types}"
+                )
 
 
 def _generate_platform_query(args, items, lookback):
@@ -402,20 +443,33 @@ def _generate_platform_query(args, items, lookback):
 
     match args.mode.lower():
         case "aql":
-            qid_list = getattr(args, 'qid', [])
-            return _generate_aql_query(items, args.type, qid_list, args.hash_type, lookback=lookback)
+            qid_list = getattr(args, "qid", [])
+            return _generate_aql_query(
+                items, args.type, qid_list, args.hash_type, lookback=lookback
+            )
         case "es":
-            event_actions = getattr(args, 'event_action', [])
-            return _generate_elastic_query(items, args.type, event_actions, args.hash_type, lookback=lookback)
+            event_actions = getattr(args, "event_action", [])
+            return _generate_elastic_query(
+                items, args.type, event_actions, args.hash_type, lookback=lookback
+            )
         case "defender":
-            include_project = getattr(args, 'project', False)
-            return _generate_defender_query(items, args.type, args.hash_type,
-                                            lookback=lookback, include_project=include_project)
+            include_project = getattr(args, "project", False)
+            return _generate_defender_query(
+                items,
+                args.type,
+                args.hash_type,
+                lookback=lookback,
+                include_project=include_project,
+            )
         case _:
-            raise ValueError(f"Unsupported mode: {args.mode}. Supported modes: {SUPPORTED_MODES}")
+            raise ValueError(
+                f"Unsupported mode: {args.mode}. Supported modes: {SUPPORTED_MODES}"
+            )
 
 
-def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=None) -> str:
+def generate_query_from_args(
+    args: Union[List[str], argparse.Namespace], parser=None
+) -> str:
     """
     Generate query from args
 
@@ -442,6 +496,7 @@ def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=
 
     # Extract items from input file
     items = extract_items(args.input)
+
     if not items:
         raise ValueError(f"No valid items found in input file: {args.input}")
 
@@ -451,9 +506,8 @@ def generate_query_from_args(args: Union[List[str], argparse.Namespace], parser=
         if lookback is None:
             raise ValueError(
                 f"Invalid lookback format: '{args.lookback}'. "
-                f"Valid formats: 5m, 10m, 30m, 1h, 3h, 12h, 1d")
+                f"Valid formats: 5m, 10m, 30m, 1h, 3h, 12h, 1d"
+            )
     except Exception as e:
         raise ValueError(f"Failed to normalize lookback time: {e}")
-
-    # Generate and return the query
     return _generate_platform_query(args, items, lookback)

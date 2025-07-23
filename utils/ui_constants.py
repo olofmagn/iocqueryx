@@ -1,8 +1,8 @@
+import logging
+
 # =============================================================================
 # CONSTANTS AND CONFIGURATION
 # =============================================================================
-
-import logging
 
 # Window Configuration
 DEFAULT_WINDOW_WIDTH = 500
@@ -39,7 +39,7 @@ TIME_RANGES = [
     ("1h", "1 HOUR"),
     ("3h", "3 HOURS"),
     ("12h", "12 HOURS"),
-    ("1d", "1 DAY")
+    ("1d", "1 DAY"),
 ]
 
 # Mode Configuration
@@ -48,21 +48,21 @@ MODE_CONFIGS = {
         "info": "Using AQL Search query mode",
         "label": "QID:",
         "show_qid": True,
-        "show_ea": False
+        "show_ea": False,
     },
     "es": {
         "info": "Using Elastic Search query mode",
         "label": "EA:",
         "show_qid": False,
-        "show_ea": True
+        "show_ea": True,
     },
     "defender": {
         "info": "Using Defender Search query mode",
         "label": "",
         "show_qid": False,
         "show_ea": False,
-        "show_projection": True
-    }
+        "show_projection": True,
+    },
 }
 
 # UI Text Constants
@@ -77,7 +77,7 @@ COPYRIGHT_COLOR = "gray50"
 # Application Configuration
 DEFAULT_LOGGER_NAME = "IocQueryx"
 DEFAULT_LOG_LEVEL = logging.INFO
-LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DEFAULT_ENCODING = "utf-8"
 
 # Supported Values
@@ -96,14 +96,14 @@ DEFAULT_HASH_TYPE = "sha256"
 PLATFORM_HASH_TYPES = {
     "aql": AQL_HASH_TYPES,
     "es": STANDARD_HASH_TYPES,
-    "defender": STANDARD_HASH_TYPES
+    "defender": STANDARD_HASH_TYPES,
 }
 
 # Time Unit Mappings
 TIME_UNIT_PATTERNS = {
     "minutes": ["minute", "minutes", "min", "m"],
     "hours": ["hour", "hours", "h"],
-    "days": ["day", "days", "d"]
+    "days": ["day", "days", "d"],
 }
 
 # Platform-specific time formats
