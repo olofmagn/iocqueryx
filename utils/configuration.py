@@ -1,10 +1,3 @@
-"""
-A simple program that generates a search query based on a given list.
-
-Author: Olof Magnusson
-Date: 2025-07-02
-"""
-
 import re
 import argparse
 import logging
@@ -27,6 +20,13 @@ from utils.ui_constants import (
     DEFENDER_ES_PLATFORMS,
     CSV_DELIMITER,
 )
+
+"""
+A simple program that generates a search query based on a given list.
+
+Author: Olof Magnusson
+Date: 2025-07-02
+"""
 
 
 # =============================================================================
