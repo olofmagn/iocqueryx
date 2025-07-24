@@ -581,8 +581,7 @@ class QueryGeneratorGUI:
             column=0,
             columnspan=3,
             pady=5,
-            sticky=GRID_STICKY_NSEW,
-            padx=WIDGET_PADDING_X,
+            padx=WIDGET_PADDING_X
         )
 
         # === Separator ===
