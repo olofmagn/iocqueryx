@@ -143,7 +143,7 @@ d41d8cd98f00b204e9800998ecf8427e, Sweden --> hash
 
 ## Requirements
 
-- Python >= 3.0.
+- Python >= 3.10.
 - External dependencies as listed in `requirements.txt`.
 
 ## Usage
@@ -158,8 +158,7 @@ Choose the mode that fits your workflow. Detailed instructions for each are prov
 ### GUI
 
 ```python3
-python3 - m
-src.main
+python3 -m src.main
 ```
 
 ```
@@ -180,11 +179,11 @@ Version: 1.0.0 olofmagn
    EXIT
 ```
 
-<img src="pictures/app.png" alt="qradar gui" width="400"/>
+<img src="pictures/app.png" alt="IocQueryX Main Interface" width="600"/>
 
 Example usage of an input file of type: `ip`, mode: `aql` and `qid`.
 
-<img src="pictures/app-in-use.png" alt="app in use" width="400"/>
+<img src="pictures/app-in-use.png" alt="App in use with query of type ip, aql and qid" width="600"/>
 
 ### CLI
 Qradar IBM (IPs)

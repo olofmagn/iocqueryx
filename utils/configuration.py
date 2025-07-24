@@ -35,7 +35,7 @@ from utils.ui_constants import (
 
 
 def get_logger(
-    name: str = DEFAULT_LOGGER_NAME, level: int = DEFAULT_LOG_LEVEL
+        name: str = DEFAULT_LOGGER_NAME, level: int = DEFAULT_LOG_LEVEL
 ) -> logging.Logger:
     """
     Logger utility
@@ -159,7 +159,7 @@ def get_supported_hash_types(mode: str) -> List[str]:
 
 
 def _format_condition_value(
-    value, wrap_values: bool = False, quote_char: str = "'"
+        value, wrap_values: bool = False, quote_char: str = "'"
 ) -> str:
     """
     Format condition value
@@ -177,11 +177,11 @@ def _format_condition_value(
 
 
 def create_single_condition(
-    field: str,
-    value,
-    comparator: str = "=",
-    wrap_values: bool = False,
-    quote_char: str = "'",
+        field: str,
+        value,
+        comparator: str = "=",
+        wrap_values: bool = False,
+        quote_char: str = "'",
 ) -> str:
     """
     Create single condition
@@ -203,12 +203,12 @@ def create_single_condition(
 
 
 def build_conditions(
-    field: str,
-    values: list,
-    operator: str = "AND",
-    wrap_values: bool = False,
-    quote_char: str = "'",
-    comparator: str = "=",
+        field: str,
+        values: list,
+        operator: str = "AND",
+        wrap_values: bool = False,
+        quote_char: str = "'",
+        comparator: str = "=",
 ) -> str:
     """
     Build conditions
@@ -330,11 +330,7 @@ def _format_time_for_platform(value: int, unit: str, mode: str) -> str | None:
         case "hours":
             return f"{value}h" if is_defender_or_elastic else f"{value} HOURS"
         case "days":
-            if is_defender_or_elastic:
-                # Convert days to hours for Defender/Elastic
-                return f"{value * 24}h"
-            else:
-                return f"{value} DAYS"
+            return f"{value}d" if is_defender_or_elastic else f"{value} DAYS"
         case _:
             return None
 
