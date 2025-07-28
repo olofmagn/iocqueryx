@@ -576,13 +576,7 @@ class QueryGeneratorGUI:
         # === Copy to Clipboard ===
         ttk.Button(
             self.frame, text="Copy to Clipboard", command=self.copy_to_clipboard
-        ).grid(
-            row=10,
-            column=0,
-            columnspan=3,
-            pady=5,
-            padx=WIDGET_PADDING_X
-        )
+        ).grid(row=10, column=0, columnspan=3, pady=5, padx=WIDGET_PADDING_X)
 
         # === Separator ===
         separator = ttk.Separator(self.frame, orient="horizontal")
