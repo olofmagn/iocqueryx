@@ -108,7 +108,7 @@ The values are normally defined by the implementer.
 
 ### Easy Input Handling
 
-- Reads all possible files
+- Reads all possible files.
 - Parses only the first field per line (e.g., `ip`, `domain`, or `hash`) using comma-seperated logic.
 
 See example structure below:
@@ -181,7 +181,7 @@ Version: 1.0.0 olofmagn
 
 <img src="pictures/app.png" alt="IocQueryX Main Interface" width="600"/>
 
-Example usage of an input file of type: `ip`, mode: `aql` and `qid`.
+Example usage of an input file of type: `ip`, mode: `aql` and filtering: `qid`.
 
 <img src="pictures/app-in-use.png" alt="App in use with query of type ip, aql and qid" width="600"/>
 
@@ -189,19 +189,19 @@ Example usage of an input file of type: `ip`, mode: `aql` and `qid`.
 Qradar IBM (IPs)
 
 ```python3
-python3 -m src.main -i testips.txt -m aql -t ip -q 1337 1338 -l 10m
+python3 -m src.main -i ips.txt -m aql -t ip -q 1337 1338 -l 30m
 ```
 
 Elastic Query (Hashes):
 
 ```python3
-python3 -m src.main -i hash.txt -m es -t hash -ht sha1 -ea 1337 1338 -l 10m
+python3 -m src.main -i hashes.txt -m es -t hash -ht sha1 -ea 1337 1338 -l 30m
 ```
 
 Defender Query (Domains):
 
 ```python3
-python3 -m src.main -i domain.txt -m defender -t domain -l 10m -p
+python3 -m src.main -i domains.txt -m defender -t domain -l 30m -p
 ```
 
 ## License
