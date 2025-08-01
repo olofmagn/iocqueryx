@@ -138,9 +138,7 @@ To identify which QID to use, you have generally two options:
 
 ### Not sure which event action to use?
 - For **hash**: `event.category: "file"` and look for the fields `file.hash.md5|sha1|sha256` with the filter `exists`.
-- For **ips/domain**: `event.category: "network"` and look for fields like `ftgd_allow` or `ftgd_blk`. The field `ftgd_error` might also be worth looking into because the activity could be located there.
-
-**TODO** investigate if it is possible to get a common list.
+- For **ips/domain**: `event.category: "network"` and look for fields like `ftgd_allow` or `ftgd_blk` with the filter `exists`. The field `ftgd_error` might also be worth looking into because the activity could be located there.
 
 ## File structure
 
@@ -168,6 +166,11 @@ To identify which QID to use, you have generally two options:
 
 - Python >= 3.10.
 - External dependencies as listed in `requirements.txt`.
+
+## Pending features
+- Build a common list of event properties in Qradar and Elastic for `ips/domains` and `hashes`.
+- Build a scraper that fetches IOC-related information from `ip/domains` and `hashes` to build queries more efficent.
+
 
 ## Usage
 
@@ -230,3 +233,4 @@ python3 -m src.main -i domains.txt -m defender -t domain -l 30m -p
 ## License
 
 This project is open-source and licensed under the MIT License. See the LICENSE file for details.
+
