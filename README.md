@@ -119,6 +119,29 @@ evil.com, Sweden --> domain
 d41d8cd98f00b204e9800998ecf8427e, Sweden --> hash
 ```
 
+## Key fields by datatype
+- For `ip` and `domain` analysis: Focus on firewall deny/permit logs.
+- For `hash` analysis: Focus on malware/exploit logs.
+
+### Not sure which QID to use?
+To identify which QID to use, you have generally two options:
+1. Fetch data directly from the API, or
+2. Perform a search and save the results to a CSV file, then extract necessary fields.
+
+#### API
+- Fetch ID for low level category `/api/data_classification/low_level_category` with filter `name="Firewall Permit"` to fetch all the `qid_records` with `/api/data_classification/qid_records`. Then perform additional filtering as desired with `low_level_category_id:4002`.
+
+#### Search parameters
+- For **hash**: `File Hash is not null` or specific hash types (`MD5`, `SHA1`, `SHA256`) to identify the correct QIDs for filtering.
+- For **ips/domain**: `Firewall Permit` and `Firewall Deny` to identify the correct QIDs for filtering.
+- A script is attached at `utils/iocqueryfield_data.py` that might be helpful for data extraction and filtering.
+
+### Not sure which event action to use?
+- For **hash**: `event.category: "file"` and look for the fields `file.hash.md5|sha1|sha256` with the filter `exists`.
+- For **ips/domain**: `event.category: "network"` and look for fields like `ftgd_allow` or `ftgd_blk`. The field `ftgd_error` might also be worth looking into because the activity could be located there.
+
+**TODO** investigate if it is possible to get a common list.
+
 ## File structure
 
 ```
