@@ -55,7 +55,7 @@ ELASTIC_FIELDS = {
     }
 }
 
-# Microsoft Defender Platform Configuration
+# Microsoft Defender Platform Mappings
 DEFENDER_FIELDS = {
     "ip": {
         "field": "RemoteIP",
@@ -137,8 +137,58 @@ To identify which QID to use, you have generally two options:
 - A script is attached at `utils/iocqueryfield_data.py` that might be helpful for data extraction and filtering.
 
 ### Not sure which event action to use?
+Similar to how you can query by `qid` in QRadar, you have two options:
+1. Fetch data directly from the API, or
+2. Perform a search and save the result to a CSV file, then extract necessary fields.
+### API
+
+Query to identify vendors and their associated `event.action` values:
+```
+GET firewall-logs-*/_search
+{
+  "size": 5,
+  "_source": ["event.action"]
+}
+```
+
+Then perform query to check for all_actions concerning `event.action`:
+
+```
+GET firewall-logs-*/_search
+{
+  "aggs": {
+    "all_actions": {
+      "terms": {
+        "field": "event.action",
+        "size": 100
+      }
+    }
+  },
+  "size": 0,
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "2025-09-08T10:00:00.000Z",
+              "lte": "2025-09-08T11:00:00.000Z"
+            }
+          }
+        }
+      ]
+    }
+  }
+} 
+```
+
+No result?
+- Check the mapping (`_mapping` API).
+- Verify if those fields exist in your docs with `_source`.
+
+#### Search
 - For **hash**: `event.category: "file"` and look for the fields `file.hash.md5|sha1|sha256` with the filter `exists`.
-- For **ips/domain**: `event.category: "network"` and look for fields like `ftgd_allow` or `ftgd_blk` with the filter `exists`. The field `ftgd_error` might also be worth looking into because the activity could be located there.
+- For **ips/domain**: `event.category: "network"` and look for firewall related fields. Check `ids` for your firewall setup and make sure datatypes are parsed correctly.
 
 ## File structure
 
@@ -167,11 +217,6 @@ To identify which QID to use, you have generally two options:
 - Python >= 3.10.
 - External dependencies as listed in `requirements.txt`.
 
-## Pending features
-- Build a common list of event properties in Qradar and Elastic for `ips/domains` and `hashes`.
-- Build a scraper that fetches IOC-related information from `ip/domains` and `hashes` to build queries more efficent.
-
-
 ## Usage
 
 This tool supports two modes of operation:
@@ -194,7 +239,7 @@ python3 -m src.main
   | | (_) | (__| |_| | |_| |  __/ |  | |_| |/  \ 
  |___\___/ \___|\__\_\\__,_|\___|_|   \__, /_/\_\
                                       |___/      
-
+2
 Welcome to the application!
 Enjoy using the app, and feel free to share any feature requests or feedback!
 Version: 1.0.0 olofmagn
