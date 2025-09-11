@@ -4,7 +4,7 @@ import logging
 
 from typing import Optional, List, Tuple
 
-from utils.ui_constants import (
+from src.utils.ui_constants import (
     DEFAULT_LOGGER_NAME,
     DEFAULT_LOG_LEVEL,
     DEFAULT_ENCODING,

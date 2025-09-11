@@ -4,8 +4,8 @@ import tkinter as tk
 
 from colorama import Fore, Style
 
-from .gui import QueryGeneratorGUI
-from utils import create_parser, generate_query_from_args, get_logger
+from src.gui import QueryGeneratorGUI
+from src.utils import create_parser, generate_query_from_args, get_logger
 
 """
 A simple program that generates a search query based on a given list.

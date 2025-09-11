@@ -4,15 +4,15 @@ from tkinter import ttk, filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
 from typing import Optional, List, Tuple
 
-from utils.generate_queries import generate_query_from_args
+from src.utils.generate_queries import generate_query_from_args
 
-from utils.configuration import (
+from src.utils.configuration import (
     get_logger,
     get_supported_hash_types,
     normalize_lookback,
 )
 
-from utils.ui_constants import (
+from src.utils.ui_constants import (
     DEFAULT_WINDOW_WIDTH,
     DEFAULT_WINDOW_HEIGHT,
     DEFAULT_OUTPUT_HEIGHT,
