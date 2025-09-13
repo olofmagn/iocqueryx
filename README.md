@@ -203,13 +203,14 @@ No result?
 ├── src
 │   ├── gui.py
 │   ├── __init__.py
-│   └── main.py
-├── testips.txt
-└── utils
-    ├── configuration.py
-    ├── generate_queries.py
-    ├── __init__.py
-    └── ui_constants.py
+│   ├── main.py
+│   └── utils
+│       ├── configuration.py
+│       ├── generate_queries.py
+│       ├── __init__.py
+│       ├── qradar_event_extractor.py
+│       └── ui_constants.py
+└── testips.txt
 ```
 
 ## Requirements
