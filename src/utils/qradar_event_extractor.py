@@ -128,7 +128,7 @@ def process_qradar_export(
             "Error: openpyxl library required for Excel files. Install with pip3 install openpyxl"
         )
     except Exception as e:
-        raise (f"Unexpected error reading file: {e}")
+        raise RuntimeError(f"Unexpected error reading file: {e}")
 
     # Filter data
     ip_domain_df = filter_dataframe(df, ip_pattern, "IP/Domain events")
