@@ -5,6 +5,7 @@ Date: 2025-08-01
 QRadar IOC Query Field Extractor
 
 Script that reads a CSV/Excel file exported from QRadar and filters events for IOC analysis
+
 Separates data into two categories:
 1. IP/Domain events: Firewall Permit|Firewall Deny logs
 2. Hash events: Malware|Exploit logs
@@ -175,7 +176,10 @@ Examples:
 
     # Required arguments
     parser.add_argument(
-        "-i", "--input", required=True, help="Input CSV/Excel file exported from QRadar"
+        "-i",
+        "--input",
+        required=True,
+        help="Input CSV/Excel file exported from QRadar"
     )
 
     # Optional arguments
@@ -207,7 +211,6 @@ Examples:
     args = parser.parse_args()
 
     try:
-        # Process the file
         ip_count, hash_count = process_qradar_export(
             input_file=args.input,
             output_dir=args.output_dir,
